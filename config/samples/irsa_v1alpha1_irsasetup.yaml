@@ -1,0 +1,12 @@
+apiVersion: irsa.kkb0318.github.io/v1alpha1
+kind: IRSASetup
+metadata:
+  labels:
+    app.kubernetes.io/name: irsasetup
+    app.kubernetes.io/instance: irsasetup-sample
+    app.kubernetes.io/part-of: irsa-manager
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: irsa-manager
+  name: irsasetup-sample
+spec:
+  # TODO(user): Add fields here

@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- irsa_v1alpha1_irsasetup.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples
