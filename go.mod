@@ -1,8 +1,8 @@
 module github.com/kkb0318/irsa-manager
 
-go 1.22
+go 1.21
 
-toolchain go1.22.1
+toolchain go1.21.8
 
 require (
 	github.com/go-jose/go-jose/v4 v4.0.1
