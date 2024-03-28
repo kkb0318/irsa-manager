@@ -8,11 +8,11 @@ import (
 )
 
 type KeyPair struct {
-	PublicKey   []byte
-	PrivateKey []byte
+	publicKey  []byte
+	privateKey []byte
 }
 
-func createKeyPair() (*KeyPair, error) {
+func CreateKeyPair() (*KeyPair, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, err
@@ -37,4 +37,12 @@ func createKeyPair() (*KeyPair, error) {
 	}
 	pubPemBytes := pem.EncodeToMemory(&pubPem)
 	return &KeyPair{pubPemBytes, privPemBytes}, nil
+}
+
+func (k *KeyPair) PublicKey() []byte {
+	return k.publicKey
+}
+
+func (k *KeyPair) PrivateKey() []byte {
+	return k.privateKey
 }
