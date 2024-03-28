@@ -1,8 +1,8 @@
 package selfhosted
 
 type OIDCIdProvider interface {
-	Discovery() []byte
-	JWK() []byte
+	Discovery() ([]byte, error)
+	JWK() ([]byte, error)
 	Endpoint() string
 }
 
