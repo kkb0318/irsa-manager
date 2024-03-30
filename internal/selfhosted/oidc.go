@@ -1,5 +1,7 @@
 package selfhosted
 
+import "context"
+
 type OIDCIdProvider interface {
 	Discovery() ([]byte, error)
 	JWK() ([]byte, error)
@@ -8,5 +10,5 @@ type OIDCIdProvider interface {
 
 type OIDCIdPCreator interface {
 	CreateStorage() error
-	Upload(o OIDCIdProvider) error
+	Upload(ctx context.Context, o OIDCIdProvider) error
 }

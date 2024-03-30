@@ -16,16 +16,10 @@ type S3IdPCreator struct {
 
 // NewS3IdPCreator initializes a new instance of S3IdPCreator with the specified AWS region and bucket name.
 // This function attempts to create an AWS client configured for the specified region.
-func NewS3IdPCreator(region, bucketName string) (*S3IdPCreator, error) {
-	ctx := context.Background()
-	awsConfig, err := client.NewAwsClient(ctx, region)
-	if err != nil {
-		return nil, fmt.Errorf("unable to load SDK config, %w", err)
-	}
+func NewS3IdPCreator(awsConfig *client.AwsConfig, bucketName string) (*S3IdPCreator, error) {
 	s3Client := awsConfig.S3Cient(bucketName)
 	return &S3IdPCreator{s3Client}, nil
 }
-
 
 // CreateStorage creates an S3 bucket
 func (s *S3IdPCreator) CreateStorage() error {
@@ -39,18 +33,26 @@ func (s *S3IdPCreator) CreateStorage() error {
 // Upload uploads the OIDC provider's discovery configuration and JSON Web Key Set (JWKS) to the specified AWS S3 bucket.
 // This method is responsible for uploading the necessary OIDC configuration files to S3, making them accessible for OIDC clients.
 func (s *S3IdPCreator) Upload(ctx context.Context, o selfhosted.OIDCIdProvider) error {
-	err := s.s3Client.PutObject(ctx,
+	discovery, err := o.Discovery()
+	if err != nil {
+		return nil
+	}
+	err = s.s3Client.PutObject(ctx,
 		CONFIGURATION_PATH,
-		o.Discovery(),
+		discovery,
 	)
 	if err != nil {
 		return fmt.Errorf("unable to upload discovery document, %w", err)
 	}
 
 	// Uplaod JWK
+	jwk, err := o.JWK()
+	if err != nil {
+		return nil
+	}
 	err = s.s3Client.PutObject(ctx,
 		"keys.json",
-		o.JWK(),
+		jwk,
 	)
 	if err != nil {
 		return fmt.Errorf("unable to upload JWK, %w", err)

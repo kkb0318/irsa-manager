@@ -7,9 +7,10 @@ import (
 	"github.com/kkb0318/irsa-manager/internal/selfhosted"
 )
 
-type MyIdProvider struct {
+type IdProvider struct {
 	jwk            *selfhosted.JWK
 	issuerHostPath string
+	jwksFileName   string
 }
 
 type OIDCDiscoveryConfiguration struct {
@@ -22,24 +23,24 @@ type OIDCDiscoveryConfiguration struct {
 	ClaimsSupported                  []string `json:"claims_supported"`
 }
 
-func (p *MyIdProvider) Discovery() ([]byte, error) {
+func (p *IdProvider) Discovery() ([]byte, error) {
 	oidcConfig := OIDCDiscoveryConfiguration{
 		Issuer:                           fmt.Sprintf("https://%s/", p.issuerHostPath),
-		JWKSURI:                          fmt.Sprintf("https://%s/keys.json", p.issuerHostPath),
+		JWKSURI:                          fmt.Sprintf("https://%s/%s", p.issuerHostPath, p.jwksFileName),
 		AuthorizationEndpoint:            "urn:kubernetes:programmatic_authorization",
 		ResponseTypesSupported:           []string{"id_token"},
 		SubjectTypesSupported:            []string{"public"},
 		IDTokenSigningAlgValuesSupported: []string{"RS256"},
 		ClaimsSupported:                  []string{"sub", "iss"},
 	}
-	jsonData, err := json.MarshalIndent(oidcConfig, "", "    ")
+	jsonData, err := json.MarshalIndent(oidcConfig, "", "  ")
 	if err != nil {
 		return nil, err
 	}
 	return jsonData, nil
 }
 
-func (p *MyIdProvider) JWK() ([]byte, error) {
+func (p *IdProvider) JWK() ([]byte, error) {
 	jsonData, err := json.MarshalIndent(p.jwk.GetKeys(), "", "  ")
 	if err != nil {
 		return nil, err
@@ -47,10 +48,10 @@ func (p *MyIdProvider) JWK() ([]byte, error) {
 	return jsonData, nil
 }
 
-func (p *MyIdProvider) Endpoint() []byte {
-	return []byte{}
+func (p *IdProvider) Endpoint() string {
+	return ""
 }
 
-func NewMyIdProvider(jwk *selfhosted.JWK, issuerHostPath string) *MyIdProvider {
-	return &MyIdProvider{jwk, issuerHostPath}
+func NewIdProvider(jwk *selfhosted.JWK, issuerHostPath, jwksFileName string) *IdProvider {
+	return &IdProvider{jwk, issuerHostPath, jwksFileName}
 }
