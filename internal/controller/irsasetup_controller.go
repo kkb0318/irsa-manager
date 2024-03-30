@@ -19,12 +19,15 @@ package controller
 import (
 	"context"
 
+	awsclient "github.com/kkb0318/irsa-manager/internal/client"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	irsav1alpha1 "github.com/kkb0318/irsa-manager/api/v1alpha1"
+	"github.com/kkb0318/irsa-manager/internal/selfhosted"
+	"github.com/kkb0318/irsa-manager/internal/selfhosted/oidc"
 )
 
 // IRSASetupReconciler reconciles a IRSASetup object
@@ -52,6 +55,37 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	// TODO(user): your logic here
 
 	return ctrl.Result{}, nil
+}
+
+func (r *IRSASetupReconciler) reconcile(ctx context.Context) error {
+	var idp selfhosted.OIDCIdProvider
+	var oidcCreator selfhosted.OIDCIdPCreator
+	keyPair, err := selfhosted.CreateKeyPair()
+	if err != nil {
+		return err
+	}
+	jwk, err := selfhosted.NewJWK(keyPair.PublicKey())
+	if err != nil {
+		return err
+	}
+	idp = oidc.NewIdProvider(jwk, "issuerHostPath", "keys.json")
+	awsConfig, err := awsclient.NewAwsClient(ctx, "ap-northeast-1")
+	if err != nil {
+		return err
+	}
+	oidcCreator, err = oidc.NewS3IdPCreator(awsConfig, "my-bucket-name")
+	if err != nil {
+		return err
+	}
+  err = oidcCreator.CreateStorage()
+	if err != nil {
+		return err
+	}
+	err = oidcCreator.Upload(ctx, idp)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
