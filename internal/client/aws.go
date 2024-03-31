@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
@@ -22,6 +23,12 @@ func NewAwsClient(ctx context.Context, region string) (*AwsConfig, error) {
 		return nil, fmt.Errorf("unable to load SDK config, %w", err)
 	}
 	return &AwsConfig{config: cfg}, nil
+}
+
+func (a *AwsConfig) IamCient() *AwsIamClient {
+	return &AwsIamClient{
+		iam.NewFromConfig(a.config),
+	}
 }
 
 func (a *AwsConfig) S3Cient(bucketName string) *AwsS3Client {
@@ -50,4 +57,32 @@ func (a *AwsS3Client) CreateBucket(ctx context.Context) error {
 		Bucket: aws.String(a.bucketName),
 	})
 	return err
+}
+
+func (a *AwsS3Client) BucketName() string {
+	return a.bucketName
+}
+
+func (a *AwsS3Client) Region() string {
+	return a.client.Options().Region
+}
+
+type AwsIamClient struct {
+	client *iam.Client
+}
+
+func (a *AwsIamClient) CreateOIDCProvider(ctx context.Context, providerUrl string) (string, error) {
+	result, err := a.client.CreateOpenIDConnectProvider(ctx, &iam.CreateOpenIDConnectProviderInput{
+		Url:            &providerUrl,
+		ClientIDList:   []string{"sts.amazonaws.com"},
+		ThumbprintList: []string{},
+	})
+	if err != nil {
+		return "", err
+	}
+	return *result.OpenIDConnectProviderArn, nil
+}
+
+func (a *AwsIamClient) Region() string {
+	return a.client.Options().Region
 }

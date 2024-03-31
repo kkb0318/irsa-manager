@@ -58,8 +58,9 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 
 func (r *IRSASetupReconciler) reconcile(ctx context.Context) error {
-	var idp selfhosted.OIDCIdProvider
-	var oidcCreator selfhosted.OIDCIdPCreator
+	var discoveryContents selfhosted.OIDCIdPDiscoveryContents
+	var discovery selfhosted.OIDCIdPDiscovery
+	var idp selfhosted.OIDCIdP
 	keyPair, err := selfhosted.CreateKeyPair()
 	if err != nil {
 		return err
@@ -68,20 +69,28 @@ func (r *IRSASetupReconciler) reconcile(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	idp = oidc.NewIdProvider(jwk, "issuerHostPath", "keys.json")
+	discoveryContents = oidc.NewIdPDiscoveryContents(jwk, "issuerHostPath", "keys.json")
 	awsConfig, err := awsclient.NewAwsClient(ctx, "ap-northeast-1")
 	if err != nil {
 		return err
 	}
-	oidcCreator, err = oidc.NewS3IdPCreator(awsConfig, "my-bucket-name")
+	discovery, err = oidc.NewS3IdPDiscovery(awsConfig, "my-bucket-name")
 	if err != nil {
 		return err
 	}
-  err = oidcCreator.CreateStorage()
+	err = discovery.CreateStorage()
 	if err != nil {
 		return err
 	}
-	err = oidcCreator.Upload(ctx, idp)
+	err = discovery.Upload(ctx, discoveryContents)
+	if err != nil {
+		return err
+	}
+	idp, err = oidc.NewAwsIdP(awsConfig, discovery)
+	if err != nil {
+		return err
+	}
+	_, err = idp.Create(ctx)
 	if err != nil {
 		return err
 	}
