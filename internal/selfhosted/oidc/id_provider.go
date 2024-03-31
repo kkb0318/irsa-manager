@@ -8,17 +8,17 @@ import (
 )
 
 type AwsIdP struct {
-	iamClient *client.AwsIamClient
-  discovery selfhosted.OIDCIdPDiscovery
+	iamClient  *client.AwsIamClient
+	issuerMeta selfhosted.OIDCIssuerMeta
 }
 
-func NewAwsIdP(awsConfig *client.AwsConfig, discovery selfhosted.OIDCIdPDiscovery) (*AwsIdP, error) {
+func NewAwsIdP(awsConfig *client.AwsConfig, issuerMeta selfhosted.OIDCIssuerMeta) (*AwsIdP, error) {
 	iamClient := awsConfig.IamCient()
-	return &AwsIdP{iamClient, discovery}, nil
+	return &AwsIdP{iamClient, issuerMeta}, nil
 }
 
 func (a *AwsIdP) Create(ctx context.Context) (string, error) {
-	arn, err := a.iamClient.CreateOIDCProvider(ctx, a.discovery.Endpoint())
+	arn, err := a.iamClient.CreateOIDCProvider(ctx, a.issuerMeta.IssuerUrl())
 	if err != nil {
 		return "", err
 	}

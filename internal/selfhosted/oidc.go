@@ -2,6 +2,17 @@ package selfhosted
 
 import "context"
 
+type OIDCIssuerMeta interface {
+	IssuerHostPath() string
+	IssuerUrl() string
+}
+
+type OIDCIdP interface {
+	Create(ctx context.Context) (string, error)
+	IsUpdate() (bool, error)
+	Update(ctx context.Context) error
+}
+
 type OIDCIdPDiscoveryContents interface {
 	Discovery() ([]byte, error)
 	JWK() ([]byte, error)
@@ -9,13 +20,13 @@ type OIDCIdPDiscoveryContents interface {
 }
 
 type OIDCIdPDiscovery interface {
-	CreateStorage() error
+	CreateStorage(ctx context.Context) error
 	Upload(ctx context.Context, o OIDCIdPDiscoveryContents) error
-	Endpoint() string
 }
 
-type OIDCIdP interface {
-	Create(ctx context.Context) (string, error)
-	IsUpdate() (bool, error)
-	Update(ctx context.Context) error
+type OIDCIdPFactory interface {
+	IssuerMeta() OIDCIssuerMeta
+	IdP(i OIDCIssuerMeta) (OIDCIdP, error)
+	IdPDiscovery() OIDCIdPDiscovery
+	IdPDiscoveryContents(i OIDCIssuerMeta) OIDCIdPDiscoveryContents
 }

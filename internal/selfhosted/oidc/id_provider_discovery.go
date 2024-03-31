@@ -16,14 +16,14 @@ type S3IdPDiscovery struct {
 
 // NewS3IdPDiscovery initializes a new instance of S3IdPCreator with the specified AWS region and bucket name.
 // This function attempts to create an AWS client configured for the specified region.
-func NewS3IdPDiscovery(awsConfig *client.AwsConfig, bucketName string) (*S3IdPDiscovery, error) {
+func NewS3IdPDiscovery(awsConfig *client.AwsConfig, bucketName string) *S3IdPDiscovery {
 	s3Client := awsConfig.S3Cient(bucketName)
-	return &S3IdPDiscovery{s3Client}, nil
+	return &S3IdPDiscovery{s3Client}
 }
 
 // CreateStorage creates an S3 bucket
-func (s *S3IdPDiscovery) CreateStorage() error {
-	err := s.s3Client.CreateBucket(context.TODO())
+func (s *S3IdPDiscovery) CreateStorage(ctx context.Context) error {
+	err := s.s3Client.CreateBucket(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to create bucket, %w", err)
 	}
@@ -60,8 +60,3 @@ func (s *S3IdPDiscovery) Upload(ctx context.Context, o selfhosted.OIDCIdPDiscove
 	return nil
 }
 
-// Endpoint constructs the URL path for the OIDC issuer based on the provided AWS region and bucket name.
-// This utility function generates the expected host path for accessing the OIDC configuration stored in an S3 bucket.
-func (p *S3IdPDiscovery) Endpoint() string {
-	return fmt.Sprintf("s3-%s.amazonaws.com/%s", p.s3Client.Region(), p.s3Client.BucketName())
-}

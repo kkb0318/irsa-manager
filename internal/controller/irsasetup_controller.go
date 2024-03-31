@@ -19,7 +19,6 @@ package controller
 import (
 	"context"
 
-	awsclient "github.com/kkb0318/irsa-manager/internal/client"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -58,9 +57,11 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 
 func (r *IRSASetupReconciler) reconcile(ctx context.Context) error {
-	var discoveryContents selfhosted.OIDCIdPDiscoveryContents
-	var discovery selfhosted.OIDCIdPDiscovery
-	var idp selfhosted.OIDCIdP
+  err := reconcileSelfhosted(ctx)
+	return err
+}
+
+func reconcileSelfhosted(ctx context.Context) error {
 	keyPair, err := selfhosted.CreateKeyPair()
 	if err != nil {
 		return err
@@ -69,24 +70,34 @@ func (r *IRSASetupReconciler) reconcile(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	discoveryContents = oidc.NewIdPDiscoveryContents(jwk, "issuerHostPath", "keys.json")
-	awsConfig, err := awsclient.NewAwsClient(ctx, "ap-northeast-1")
+  // get from CRs
+	region := "ap-northeast-1"
+	bucketName := "my-bucket-name"
+	jwksFileName := "keys.json"
+  var factory selfhosted.OIDCIdPFactory
+
+	factory, err = oidc.NewAwsS3IdpFactory(
+		ctx,
+		region,
+		bucketName,
+		jwk,
+		jwksFileName,
+	)
 	if err != nil {
 		return err
 	}
-	discovery, err = oidc.NewS3IdPDiscovery(awsConfig, "my-bucket-name")
+	issuerMeta := factory.IssuerMeta()
+	discovery := factory.IdPDiscovery()
+	discoveryContents := factory.IdPDiscoveryContents(issuerMeta)
+	idp, err := factory.IdP(issuerMeta)
 	if err != nil {
 		return err
 	}
-	err = discovery.CreateStorage()
+	err = discovery.CreateStorage(ctx)
 	if err != nil {
 		return err
 	}
 	err = discovery.Upload(ctx, discoveryContents)
-	if err != nil {
-		return err
-	}
-	idp, err = oidc.NewAwsIdP(awsConfig, discovery)
 	if err != nil {
 		return err
 	}

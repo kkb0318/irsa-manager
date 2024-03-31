@@ -8,9 +8,9 @@ import (
 )
 
 type IdPDiscoveryContents struct {
-	jwk            *selfhosted.JWK
-	issuerHostPath string
-	jwksFileName   string
+	jwk          *selfhosted.JWK
+	issuerMeta   selfhosted.OIDCIssuerMeta
+	jwksFileName string
 }
 
 type oidcDiscoveryConfiguration struct {
@@ -23,10 +23,14 @@ type oidcDiscoveryConfiguration struct {
 	ClaimsSupported                  []string `json:"claims_supported"`
 }
 
+func NewIdPDiscoveryContents(jwk *selfhosted.JWK, issuerMeta selfhosted.OIDCIssuerMeta, jwksFileName string) *IdPDiscoveryContents {
+	return &IdPDiscoveryContents{jwk, issuerMeta, jwksFileName}
+}
+
 func (p *IdPDiscoveryContents) Discovery() ([]byte, error) {
 	oidcConfig := oidcDiscoveryConfiguration{
-		Issuer:                           fmt.Sprintf("https://%s/", p.issuerHostPath),
-		JWKSURI:                          fmt.Sprintf("https://%s/%s", p.issuerHostPath, p.jwksFileName),
+		Issuer:                           fmt.Sprintf("%s/", p.issuerMeta.IssuerUrl()),
+		JWKSURI:                          fmt.Sprintf("%s/%s", p.issuerMeta.IssuerUrl(), p.jwksFileName),
 		AuthorizationEndpoint:            "urn:kubernetes:programmatic_authorization",
 		ResponseTypesSupported:           []string{"id_token"},
 		SubjectTypesSupported:            []string{"public"},
@@ -50,8 +54,4 @@ func (p *IdPDiscoveryContents) JWK() ([]byte, error) {
 
 func (p *IdPDiscoveryContents) JWKsFileName() string {
 	return p.jwksFileName
-}
-
-func NewIdPDiscoveryContents(jwk *selfhosted.JWK, issuerHostPath, jwksFileName string) *IdPDiscoveryContents {
-	return &IdPDiscoveryContents{jwk, issuerHostPath, jwksFileName}
 }
