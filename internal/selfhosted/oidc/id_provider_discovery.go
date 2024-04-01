@@ -59,4 +59,3 @@ func (s *S3IdPDiscovery) Upload(ctx context.Context, o selfhosted.OIDCIdPDiscove
 	}
 	return nil
 }
-

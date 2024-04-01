@@ -57,7 +57,7 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 
 func (r *IRSASetupReconciler) reconcile(ctx context.Context) error {
-  err := reconcileSelfhosted(ctx)
+	err := reconcileSelfhosted(ctx)
 	return err
 }
 
@@ -70,11 +70,11 @@ func reconcileSelfhosted(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-  // get from CRs
+	// get from CRs
 	region := "ap-northeast-1"
 	bucketName := "my-bucket-name"
 	jwksFileName := "keys.json"
-  var factory selfhosted.OIDCIdPFactory
+	var factory selfhosted.OIDCIdPFactory
 
 	factory, err = oidc.NewAwsS3IdpFactory(
 		ctx,
