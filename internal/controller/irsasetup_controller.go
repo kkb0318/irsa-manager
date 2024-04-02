@@ -70,13 +70,23 @@ func reconcileSelfhosted(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	factory, err := newOIDCIdpFactory(ctx, jwk)
+	if err != nil {
+		return err
+	}
+	err = selfhosted.Execute(ctx, factory)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func newOIDCIdpFactory(ctx context.Context, jwk *selfhosted.JWK) (selfhosted.OIDCIdPFactory, error) {
 	// get from CRs
 	region := "ap-northeast-1"
 	bucketName := "my-bucket-name"
 	jwksFileName := "keys.json"
-	var factory selfhosted.OIDCIdPFactory
-
-	factory, err = oidc.NewAwsS3IdpFactory(
+	factory, err := oidc.NewAwsS3IdpFactory(
 		ctx,
 		region,
 		bucketName,
@@ -84,28 +94,9 @@ func reconcileSelfhosted(ctx context.Context) error {
 		jwksFileName,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	issuerMeta := factory.IssuerMeta()
-	discovery := factory.IdPDiscovery()
-	discoveryContents := factory.IdPDiscoveryContents(issuerMeta)
-	idp, err := factory.IdP(issuerMeta)
-	if err != nil {
-		return err
-	}
-	err = discovery.CreateStorage(ctx)
-	if err != nil {
-		return err
-	}
-	err = discovery.Upload(ctx, discoveryContents)
-	if err != nil {
-		return err
-	}
-	_, err = idp.Create(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
+	return factory, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
