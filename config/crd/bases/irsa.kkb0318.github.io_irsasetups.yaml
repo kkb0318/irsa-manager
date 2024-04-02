@@ -17,7 +17,8 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: IRSASetup is the Schema for the irsasetups API
+        description: IRSASetup represents a configuration for setting up IAM Roles
+          for Service Accounts (IRSA) in a Kubernetes cluster.
         properties:
           apiVersion:
             description: |-
@@ -39,10 +40,54 @@ spec:
           spec:
             description: IRSASetupSpec defines the desired state of IRSASetup
             properties:
-              foo:
-                description: Foo is an example field of IRSASetup. Edit irsasetup_types.go
-                  to remove/update
+              auth:
+                description: Auth contains authentication configuration details.
+                properties:
+                  secretRef:
+                    description: SecretRef specifies the reference to the Kubernetes
+                      secret containing authentication details.
+                    properties:
+                      name:
+                        description: Name specifies the name of the secret.
+                        type: string
+                      namespace:
+                        description: Namespace specifies the namespace of the secret.
+                        type: string
+                    required:
+                    - name
+                    type: object
+                required:
+                - secretRef
+                type: object
+              discovery:
+                description: |-
+                  Discovery configures the IdP Discovery process, essential for setting up IRSA by locating
+                  the OIDC provider information.
+                properties:
+                  s3:
+                    description: S3 specifies the AWS S3 bucket details where the
+                      OIDC provider's discovery information is hosted.
+                    properties:
+                      bucketName:
+                        description: BucketName is the name of the S3 bucket that
+                          hosts the OIDC discovery information.
+                        type: string
+                      region:
+                        description: Region denotes the AWS region where the S3 bucket
+                          is located.
+                        type: string
+                    required:
+                    - bucketName
+                    - region
+                    type: object
+                type: object
+              mode:
+                description: Mode specifies the mode of operation. Can be either "selfhosted"
+                  or "eks".
                 type: string
+            required:
+            - discovery
+            - mode
             type: object
           status:
             description: IRSASetupStatus defines the observed state of IRSASetup

@@ -20,16 +20,53 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+const (
+	// IRSASetupKind represents the kind attribute of an IRSASetup resource.
+	IRSASetupKind = "IRSASetup"
+)
 
 // IRSASetupSpec defines the desired state of IRSASetup
 type IRSASetupSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Mode specifies the mode of operation. Can be either "selfhosted" or "eks".
+	Mode string `json:"mode"`
 
-	// Foo is an example field of IRSASetup. Edit irsasetup_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Discovery configures the IdP Discovery process, essential for setting up IRSA by locating
+	// the OIDC provider information.
+	Discovery Discovery `json:"discovery"`
+
+	// Auth contains authentication configuration details.
+	Auth Auth `json:"auth,omitempty"`
+}
+
+// Discovery holds the configuration for IdP Discovery, which is crucial for locating
+// the OIDC provider in a self-hosted environment.
+type Discovery struct {
+	// S3 specifies the AWS S3 bucket details where the OIDC provider's discovery information is hosted.
+	S3 S3Discovery `json:"s3,omitempty"`
+}
+
+// S3Discovery contains the specifics of the S3 bucket used for hosting OIDC provider discovery information.
+type S3Discovery struct {
+	// Region denotes the AWS region where the S3 bucket is located.
+	Region string `json:"region"`
+
+	// BucketName is the name of the S3 bucket that hosts the OIDC discovery information.
+	BucketName string `json:"bucketName"`
+}
+
+// Auth holds the authentication configuration details.
+type Auth struct {
+	// SecretRef specifies the reference to the Kubernetes secret containing authentication details.
+	SecretRef SecretRef `json:"secretRef"`
+}
+
+// SecretRef contains the reference to a Kubernetes secret.
+type SecretRef struct {
+	// Name specifies the name of the secret.
+	Name string `json:"name"`
+
+	// Namespace specifies the namespace of the secret.
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // IRSASetupStatus defines the observed state of IRSASetup
@@ -41,7 +78,7 @@ type IRSASetupStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// IRSASetup is the Schema for the irsasetups API
+// IRSASetup represents a configuration for setting up IAM Roles for Service Accounts (IRSA) in a Kubernetes cluster.
 type IRSASetup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
