@@ -22,7 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	irsav1alpha1 "github.com/kkb0318/irsa-manager/api/v1alpha1"
 	"github.com/kkb0318/irsa-manager/internal/selfhosted"
@@ -49,19 +49,25 @@ type IRSASetupReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.3/pkg/reconcile
 func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	log := ctrllog.FromContext(ctx)
+	obj := &irsav1alpha1.IRSASetup{}
+	if err := r.Get(ctx, req.NamespacedName, obj); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+	if err := r.reconcile(ctx, obj); err != nil {
+		return ctrl.Result{}, err
+	}
 
-	// TODO(user): your logic here
-
+	log.Info("successfully reconciled")
 	return ctrl.Result{}, nil
 }
 
-func (r *IRSASetupReconciler) reconcile(ctx context.Context) error {
-	err := reconcileSelfhosted(ctx)
+func (r *IRSASetupReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSASetup) error {
+	err := reconcileSelfhosted(ctx, obj)
 	return err
 }
 
-func reconcileSelfhosted(ctx context.Context) error {
+func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup) error {
 	keyPair, err := selfhosted.CreateKeyPair()
 	if err != nil {
 		return err
@@ -70,7 +76,7 @@ func reconcileSelfhosted(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	factory, err := newOIDCIdpFactory(ctx, jwk)
+	factory, err := newOIDCIdpFactory(ctx, obj, jwk)
 	if err != nil {
 		return err
 	}
@@ -81,10 +87,9 @@ func reconcileSelfhosted(ctx context.Context) error {
 	return nil
 }
 
-func newOIDCIdpFactory(ctx context.Context, jwk *selfhosted.JWK) (selfhosted.OIDCIdPFactory, error) {
-	// get from CRs
-	region := "ap-northeast-1"
-	bucketName := "my-bucket-name"
+func newOIDCIdpFactory(ctx context.Context, obj *irsav1alpha1.IRSASetup, jwk *selfhosted.JWK) (selfhosted.OIDCIdPFactory, error) {
+	region := obj.Spec.Discovery.S3.Region
+	bucketName := obj.Spec.Discovery.S3.BucketName
 	jwksFileName := "keys.json"
 	factory, err := oidc.NewAwsS3IdpFactory(
 		ctx,
