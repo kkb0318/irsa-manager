@@ -40,3 +40,7 @@ func (f *AwsS3IdPFactory) IdP(i selfhosted.OIDCIssuerMeta) (selfhosted.OIDCIdP, 
 func (f *AwsS3IdPFactory) IdPDiscovery() selfhosted.OIDCIdPDiscovery {
 	return NewS3IdPDiscovery(f.awsConfig, f.bucketName)
 }
+
+func (f *AwsS3IdPFactory) IdPDiscoveryContents(i selfhosted.OIDCIssuerMeta) selfhosted.OIDCIdPDiscoveryContents {
+	return NewIdPDiscoveryContents(f.jwk, i, f.jwksFileName)
+}
