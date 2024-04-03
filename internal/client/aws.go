@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 type AwsConfig struct {
@@ -54,7 +56,12 @@ func (a *AwsS3Client) PutObject(ctx context.Context, key string, body []byte) er
 
 func (a *AwsS3Client) CreateBucket(ctx context.Context) error {
 	_, err := a.client.CreateBucket(ctx, &s3.CreateBucketInput{
+		ACL:    types.BucketCannedACLPublicRead,
 		Bucket: aws.String(a.bucketName),
+		CreateBucketConfiguration: &types.CreateBucketConfiguration{
+			LocationConstraint: types.BucketLocationConstraint(a.Region()),
+		},
+		ObjectOwnership: types.ObjectOwnershipBucketOwnerPreferred,
 	})
 	return err
 }
@@ -73,9 +80,11 @@ type AwsIamClient struct {
 
 func (a *AwsIamClient) CreateOIDCProvider(ctx context.Context, providerUrl string) (string, error) {
 	result, err := a.client.CreateOpenIDConnectProvider(ctx, &iam.CreateOpenIDConnectProviderInput{
-		Url:            &providerUrl,
-		ClientIDList:   []string{"sts.amazonaws.com"},
-		ThumbprintList: []string{},
+		Url:          &providerUrl,
+		ClientIDList: []string{"sts.amazonaws.com"},
+		ThumbprintList: []string{
+			strings.Repeat("x", 40), // Thumbprint is required, but IAM will retrieve and use the top intermediate CA thumbprint of the OpenID Connect identity provider server certificate.
+		},
 	})
 	if err != nil {
 		return "", err

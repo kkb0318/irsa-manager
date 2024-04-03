@@ -51,7 +51,15 @@ var _ = Describe("IRSASetup Controller", func() {
 						Name:      resourceName,
 						Namespace: "default",
 					},
-					// TODO(user): Specify other spec details if needed.
+					Spec: irsav1alpha1.IRSASetupSpec{
+						Mode: "selfhoted",
+						Discovery: irsav1alpha1.Discovery{
+							S3: irsav1alpha1.S3Discovery{
+								Region:     "ap-northeast-1",
+								BucketName: "irsa-manager-kkb-1",
+							},
+						},
+					},
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 			}
