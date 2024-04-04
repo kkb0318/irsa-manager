@@ -47,21 +47,56 @@ type AwsS3Client struct {
 
 func (a *AwsS3Client) PutObject(ctx context.Context, key string, body []byte) error {
 	_, err := a.client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(a.bucketName),
-		Key:    aws.String(key),
-		Body:   bytes.NewReader(body),
+		Bucket:      aws.String(a.bucketName),
+		Key:         aws.String(key),
+		ACL:         types.ObjectCannedACLPublicRead,
+		Body:        bytes.NewReader(body),
+		ContentType: aws.String("application/json"),
 	})
 	return err
 }
 
 func (a *AwsS3Client) CreateBucket(ctx context.Context) error {
+	bucket := aws.String(a.bucketName)
 	_, err := a.client.CreateBucket(ctx, &s3.CreateBucketInput{
-		ACL:    types.BucketCannedACLPublicRead,
-		Bucket: aws.String(a.bucketName),
+		Bucket: bucket,
 		CreateBucketConfiguration: &types.CreateBucketConfiguration{
 			LocationConstraint: types.BucketLocationConstraint(a.Region()),
 		},
-		ObjectOwnership: types.ObjectOwnershipBucketOwnerPreferred,
+	})
+	if err != nil {
+		return err
+	}
+	_, err = a.client.DeletePublicAccessBlock(ctx, &s3.DeletePublicAccessBlockInput{Bucket: bucket})
+	if err != nil {
+		return err
+	}
+	_, err = a.client.PutBucketOwnershipControls(ctx, &s3.PutBucketOwnershipControlsInput{
+		Bucket: bucket,
+		OwnershipControls: &types.OwnershipControls{
+			Rules: []types.OwnershipControlsRule{
+				{
+					ObjectOwnership: types.ObjectOwnershipBucketOwnerPreferred,
+				},
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	// _, err = a.client.PutBucketAcl(ctx, &s3.PutBucketAclInput{
+	// 	Bucket: bucket,
+	// 	ACL:    types.BucketCannedACLPublicRead,
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+	return nil
+}
+
+func (a *AwsS3Client) PutBucketOwnershipControls(ctx context.Context) error {
+	_, err := a.client.PutBucketOwnershipControls(ctx, &s3.PutBucketOwnershipControlsInput{
+		Bucket: aws.String(a.bucketName),
 	})
 	return err
 }
