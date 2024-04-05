@@ -45,7 +45,7 @@ type AwsS3Client struct {
 	client     *s3.Client
 }
 
-func (a *AwsS3Client) PutObject(ctx context.Context, key string, body []byte) error {
+func (a *AwsS3Client) PutObjectPublic(ctx context.Context, key string, body []byte) error {
 	_, err := a.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:      aws.String(a.bucketName),
 		Key:         aws.String(key),
@@ -56,7 +56,7 @@ func (a *AwsS3Client) PutObject(ctx context.Context, key string, body []byte) er
 	return err
 }
 
-func (a *AwsS3Client) CreateBucket(ctx context.Context) error {
+func (a *AwsS3Client) CreateBucketPublic(ctx context.Context) error {
 	bucket := aws.String(a.bucketName)
 	_, err := a.client.CreateBucket(ctx, &s3.CreateBucketInput{
 		Bucket: bucket,
@@ -84,21 +84,7 @@ func (a *AwsS3Client) CreateBucket(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	// _, err = a.client.PutBucketAcl(ctx, &s3.PutBucketAclInput{
-	// 	Bucket: bucket,
-	// 	ACL:    types.BucketCannedACLPublicRead,
-	// })
-	// if err != nil {
-	// 	return err
-	// }
 	return nil
-}
-
-func (a *AwsS3Client) PutBucketOwnershipControls(ctx context.Context) error {
-	_, err := a.client.PutBucketOwnershipControls(ctx, &s3.PutBucketOwnershipControlsInput{
-		Bucket: aws.String(a.bucketName),
-	})
-	return err
 }
 
 func (a *AwsS3Client) BucketName() string {

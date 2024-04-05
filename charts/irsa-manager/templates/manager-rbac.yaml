@@ -1,0 +1,51 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "irsa-manager.fullname" . }}-manager-role
+  labels:
+  {{- include "irsa-manager.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - irsa.kkb0318.github.io
+  resources:
+  - irsasetups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - irsa.kkb0318.github.io
+  resources:
+  - irsasetups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - irsa.kkb0318.github.io
+  resources:
+  - irsasetups/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "irsa-manager.fullname" . }}-manager-rolebinding
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: irsa-manager
+    app.kubernetes.io/part-of: irsa-manager
+  {{- include "irsa-manager.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: '{{ include "irsa-manager.fullname" . }}-manager-role'
+subjects:
+- kind: ServiceAccount
+  name: '{{ include "irsa-manager.fullname" . }}-controller-manager'
+  namespace: '{{ .Release.Namespace }}'
