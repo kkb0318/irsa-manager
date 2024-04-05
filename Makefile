@@ -60,6 +60,8 @@ ENVTEST_K8S_VERSION = 1.28.3
 # CRD_REF_DOCS_VERSION
 CRD_REF_DOCS_VERSION = v0.0.12
 
+GOLANGCI_LINT_VERSION ?= v1.57.2
+
 
 .PHONY: all
 all: build
@@ -69,6 +71,10 @@ all: build
 
 helm: manifests kustomize helmify
 	$(KUSTOMIZE) build config/release | $(HELMIFY) -crd-dir charts/irsa-manager
+
+.PHONY: mock
+mock: mockgen
+	mockgen -source internal/selfhosted/oidc.go -destination internal/mock/oidc_mock.go -package mock
 
 
 .PHONY: manifests
@@ -89,15 +95,9 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test $$(go list ./... | grep -v /e2e) -coverprofile cover.out
-
-# Utilize Kind or modify the e2e tests to load the image locally, enabling compatibility with other vendors.
-.PHONY: test-e2e  # Run the e2e tests against a Kind k8s instance that is spun up.
-test-e2e:
-	go test ./test/e2e/ -v -ginkgo.v
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test -coverprofile cover.out
 	
 GOLANGCI_LINT = $(shell pwd)/bin/golangci-lint
-GOLANGCI_LINT_VERSION ?= v1.54.2
 golangci-lint:
 	@[ -f $(GOLANGCI_LINT) ] || { \
 	set -e ;\
@@ -183,6 +183,11 @@ $(CONTROLLER_GEN): $(LOCALBIN)
 envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
 	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+
+.PHONY: mockgen
+mockgen: $(MOCKGEN) ## Download envtest-setup locally if necessary.
+$(MOCKGEN): $(LOCALBIN)
+	test -s $(LOCALBIN)/mockgen || GOBIN=$(LOCALBIN) go install go.uber.org/mock/mockgen@latest
 
 .PHONY: helmify
 helmify: $(HELMIFY) ## Download helmify locally if necessary.

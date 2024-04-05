@@ -23,7 +23,7 @@ func NewS3IdPDiscovery(awsConfig *client.AwsConfig, bucketName string) *S3IdPDis
 
 // CreateStorage creates an S3 bucket
 func (s *S3IdPDiscovery) CreateStorage(ctx context.Context) error {
-	err := s.s3Client.CreateBucket(ctx)
+	err := s.s3Client.CreateBucketPublic(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to create bucket, %w", err)
 	}
@@ -37,7 +37,7 @@ func (s *S3IdPDiscovery) Upload(ctx context.Context, o selfhosted.OIDCIdPDiscove
 	if err != nil {
 		return nil
 	}
-	err = s.s3Client.PutObject(ctx,
+	err = s.s3Client.PutObjectPublic(ctx,
 		CONFIGURATION_PATH,
 		discovery,
 	)
@@ -50,7 +50,7 @@ func (s *S3IdPDiscovery) Upload(ctx context.Context, o selfhosted.OIDCIdPDiscove
 	if err != nil {
 		return nil
 	}
-	err = s.s3Client.PutObject(ctx,
+	err = s.s3Client.PutObjectPublic(ctx,
 		o.JWKsFileName(),
 		jwk,
 	)
