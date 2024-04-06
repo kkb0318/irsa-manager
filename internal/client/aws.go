@@ -13,36 +13,43 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
-type AwsConfig struct {
+type AwsClientFactory struct {
 	config aws.Config
 }
 
-func NewAwsClient(ctx context.Context, region string) (*AwsConfig, error) {
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion(region),
+type AwsClient interface {
+	IamCient() *AwsIamClient
+	S3Cient(region, bucketName string) *AwsS3Client
+}
+
+func NewAwsClientFactory(ctx context.Context) (*AwsClientFactory, error) {
+	cfg, err := config.LoadDefaultConfig(
+		ctx,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to load SDK config, %w", err)
 	}
-	return &AwsConfig{config: cfg}, nil
+	return &AwsClientFactory{config: cfg}, nil
 }
 
-func (a *AwsConfig) IamCient() *AwsIamClient {
+func (a *AwsClientFactory) IamCient() *AwsIamClient {
 	return &AwsIamClient{
 		iam.NewFromConfig(a.config),
 	}
 }
 
-func (a *AwsConfig) S3Cient(bucketName string) *AwsS3Client {
+func (a *AwsClientFactory) S3Cient(bucketName, region string) *AwsS3Client {
 	return &AwsS3Client{
-		bucketName,
 		s3.NewFromConfig(a.config),
+		region,
+		bucketName,
 	}
 }
 
 type AwsS3Client struct {
-	bucketName string
 	client     *s3.Client
+	region     string
+	bucketName string
 }
 
 func (a *AwsS3Client) PutObjectPublic(ctx context.Context, key string, body []byte) error {
@@ -92,7 +99,7 @@ func (a *AwsS3Client) BucketName() string {
 }
 
 func (a *AwsS3Client) Region() string {
-	return a.client.Options().Region
+	return a.region
 }
 
 type AwsIamClient struct {
@@ -111,8 +118,4 @@ func (a *AwsIamClient) CreateOIDCProvider(ctx context.Context, providerUrl strin
 		return "", err
 	}
 	return *result.OpenIDConnectProviderArn, nil
-}
-
-func (a *AwsIamClient) Region() string {
-	return a.client.Options().Region
 }

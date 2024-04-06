@@ -10,20 +10,22 @@ import (
 type AwsS3IdPFactory struct {
 	region       string
 	bucketName   string
-	awsConfig    *awsclient.AwsConfig
+	awsClient    awsclient.AwsClient
 	jwk          *selfhosted.JWK
 	jwksFileName string
 }
 
-func NewAwsS3IdpFactory(ctx context.Context, region, bucketName string, jwk *selfhosted.JWK, jwksFileName string) (*AwsS3IdPFactory, error) {
-	awsConfig, err := awsclient.NewAwsClient(ctx, region)
-	if err != nil {
-		return nil, err
-	}
+func NewAwsS3IdpFactory(ctx context.Context,
+	region, bucketName string,
+	jwk *selfhosted.JWK,
+	jwksFileName string,
+	awsClient awsclient.AwsClient,
+) (*AwsS3IdPFactory, error) {
+	// awsClient, err := awsclient.NewAwsClientFactory(ctx, region)
 	return &AwsS3IdPFactory{
 		region,
 		bucketName,
-		awsConfig,
+		awsClient,
 		jwk,
 		jwksFileName,
 	}, nil
@@ -34,11 +36,11 @@ func (f *AwsS3IdPFactory) IssuerMeta() selfhosted.OIDCIssuerMeta {
 }
 
 func (f *AwsS3IdPFactory) IdP(i selfhosted.OIDCIssuerMeta) (selfhosted.OIDCIdP, error) {
-	return NewAwsIdP(f.awsConfig, i)
+	return NewAwsIdP(f.awsClient, i)
 }
 
 func (f *AwsS3IdPFactory) IdPDiscovery() selfhosted.OIDCIdPDiscovery {
-	return NewS3IdPDiscovery(f.awsConfig, f.bucketName)
+	return NewS3IdPDiscovery(f.awsClient, f.region, f.bucketName)
 }
 
 func (f *AwsS3IdPFactory) IdPDiscoveryContents(i selfhosted.OIDCIssuerMeta) selfhosted.OIDCIdPDiscoveryContents {

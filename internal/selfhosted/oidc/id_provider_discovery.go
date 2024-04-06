@@ -16,8 +16,8 @@ type S3IdPDiscovery struct {
 
 // NewS3IdPDiscovery initializes a new instance of S3IdPCreator with the specified AWS region and bucket name.
 // This function attempts to create an AWS client configured for the specified region.
-func NewS3IdPDiscovery(awsConfig *client.AwsConfig, bucketName string) *S3IdPDiscovery {
-	s3Client := awsConfig.S3Cient(bucketName)
+func NewS3IdPDiscovery(awsConfig client.AwsClient, region, bucketName string) *S3IdPDiscovery {
+	s3Client := awsConfig.S3Cient(region, bucketName)
 	return &S3IdPDiscovery{s3Client}
 }
 

@@ -12,7 +12,7 @@ type AwsIdP struct {
 	issuerMeta selfhosted.OIDCIssuerMeta
 }
 
-func NewAwsIdP(awsConfig *client.AwsConfig, issuerMeta selfhosted.OIDCIssuerMeta) (*AwsIdP, error) {
+func NewAwsIdP(awsConfig client.AwsClient, issuerMeta selfhosted.OIDCIssuerMeta) (*AwsIdP, error) {
 	iamClient := awsConfig.IamCient()
 	return &AwsIdP{iamClient, issuerMeta}, nil
 }

@@ -25,6 +25,7 @@ import (
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	irsav1alpha1 "github.com/kkb0318/irsa-manager/api/v1alpha1"
+	awsclient "github.com/kkb0318/irsa-manager/internal/client"
 	"github.com/kkb0318/irsa-manager/internal/selfhosted"
 	"github.com/kkb0318/irsa-manager/internal/selfhosted/oidc"
 )
@@ -32,7 +33,8 @@ import (
 // IRSASetupReconciler reconciles a IRSASetup object
 type IRSASetupReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme    *runtime.Scheme
+	AwsClient awsclient.AwsClient
 }
 
 //+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsasetups,verbs=get;list;watch;create;update;patch;delete
@@ -63,11 +65,11 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 
 func (r *IRSASetupReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSASetup) error {
-	err := reconcileSelfhosted(ctx, obj)
+	err := reconcileSelfhosted(ctx, obj, r.AwsClient)
 	return err
 }
 
-func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup) error {
+func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsClient awsclient.AwsClient) error {
 	keyPair, err := selfhosted.CreateKeyPair()
 	if err != nil {
 		return err
@@ -76,7 +78,7 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup) error
 	if err != nil {
 		return err
 	}
-	factory, err := newOIDCIdpFactory(ctx, obj, jwk)
+	factory, err := newOIDCIdpFactory(ctx, obj, jwk, awsClient)
 	if err != nil {
 		return err
 	}
@@ -87,7 +89,7 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup) error
 	return nil
 }
 
-func newOIDCIdpFactory(ctx context.Context, obj *irsav1alpha1.IRSASetup, jwk *selfhosted.JWK) (selfhosted.OIDCIdPFactory, error) {
+func newOIDCIdpFactory(ctx context.Context, obj *irsav1alpha1.IRSASetup, jwk *selfhosted.JWK, awsClient awsclient.AwsClient) (selfhosted.OIDCIdPFactory, error) {
 	region := obj.Spec.Discovery.S3.Region
 	bucketName := obj.Spec.Discovery.S3.BucketName
 	jwksFileName := "keys.json"
@@ -97,6 +99,7 @@ func newOIDCIdpFactory(ctx context.Context, obj *irsav1alpha1.IRSASetup, jwk *se
 		bucketName,
 		jwk,
 		jwksFileName,
+		awsClient,
 	)
 	if err != nil {
 		return nil, err

@@ -64,7 +64,7 @@ GOLANGCI_LINT_VERSION ?= v1.57.2
 
 
 .PHONY: all
-all: build
+all: fmt vet lint generate manifests kustomize helmify generate-docs mock
 
 
 ##@ Development
