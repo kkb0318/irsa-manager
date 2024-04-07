@@ -17,6 +17,17 @@ type AwsClientFactory struct {
 	config aws.Config
 }
 
+type AwsIamAPI interface {
+	CreateOpenIDConnectProvider(ctx context.Context, params *iam.CreateOpenIDConnectProviderInput, optFns ...func(*iam.Options)) (*iam.CreateOpenIDConnectProviderOutput, error)
+}
+
+type AwsS3API interface {
+	CreateBucket(ctx context.Context, params *s3.CreateBucketInput, optFns ...func(*s3.Options)) (*s3.CreateBucketOutput, error)
+	PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error)
+	DeletePublicAccessBlock(ctx context.Context, params *s3.DeletePublicAccessBlockInput, optFns ...func(*s3.Options)) (*s3.DeletePublicAccessBlockOutput, error)
+	PutBucketOwnershipControls(ctx context.Context, params *s3.PutBucketOwnershipControlsInput, optFns ...func(*s3.Options)) (*s3.PutBucketOwnershipControlsOutput, error)
+}
+
 type AwsClient interface {
 	IamCient() *AwsIamClient
 	S3Cient(region, bucketName string) *AwsS3Client
@@ -47,13 +58,13 @@ func (a *AwsClientFactory) S3Cient(bucketName, region string) *AwsS3Client {
 }
 
 type AwsS3Client struct {
-	client     *s3.Client
+	AwsS3API
 	region     string
 	bucketName string
 }
 
 func (a *AwsS3Client) PutObjectPublic(ctx context.Context, key string, body []byte) error {
-	_, err := a.client.PutObject(ctx, &s3.PutObjectInput{
+	_, err := a.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:      aws.String(a.bucketName),
 		Key:         aws.String(key),
 		ACL:         types.ObjectCannedACLPublicRead,
@@ -65,7 +76,7 @@ func (a *AwsS3Client) PutObjectPublic(ctx context.Context, key string, body []by
 
 func (a *AwsS3Client) CreateBucketPublic(ctx context.Context) error {
 	bucket := aws.String(a.bucketName)
-	_, err := a.client.CreateBucket(ctx, &s3.CreateBucketInput{
+	_, err := a.CreateBucket(ctx, &s3.CreateBucketInput{
 		Bucket: bucket,
 		CreateBucketConfiguration: &types.CreateBucketConfiguration{
 			LocationConstraint: types.BucketLocationConstraint(a.Region()),
@@ -74,11 +85,11 @@ func (a *AwsS3Client) CreateBucketPublic(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	_, err = a.client.DeletePublicAccessBlock(ctx, &s3.DeletePublicAccessBlockInput{Bucket: bucket})
+	_, err = a.DeletePublicAccessBlock(ctx, &s3.DeletePublicAccessBlockInput{Bucket: bucket})
 	if err != nil {
 		return err
 	}
-	_, err = a.client.PutBucketOwnershipControls(ctx, &s3.PutBucketOwnershipControlsInput{
+	_, err = a.PutBucketOwnershipControls(ctx, &s3.PutBucketOwnershipControlsInput{
 		Bucket: bucket,
 		OwnershipControls: &types.OwnershipControls{
 			Rules: []types.OwnershipControlsRule{
@@ -103,11 +114,11 @@ func (a *AwsS3Client) Region() string {
 }
 
 type AwsIamClient struct {
-	client *iam.Client
+	AwsIamAPI
 }
 
 func (a *AwsIamClient) CreateOIDCProvider(ctx context.Context, providerUrl string) (string, error) {
-	result, err := a.client.CreateOpenIDConnectProvider(ctx, &iam.CreateOpenIDConnectProviderInput{
+	result, err := a.CreateOpenIDConnectProvider(ctx, &iam.CreateOpenIDConnectProviderInput{
 		Url:          &providerUrl,
 		ClientIDList: []string{"sts.amazonaws.com"},
 		ThumbprintList: []string{
