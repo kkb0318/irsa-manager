@@ -21,7 +21,6 @@ func NewAwsS3IdpFactory(ctx context.Context,
 	jwksFileName string,
 	awsClient awsclient.AwsClient,
 ) (*AwsS3IdPFactory, error) {
-	// awsClient, err := awsclient.NewAwsClientFactory(ctx, region)
 	return &AwsS3IdPFactory{
 		region,
 		bucketName,

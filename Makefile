@@ -74,7 +74,8 @@ helm: manifests kustomize helmify
 
 .PHONY: mock
 mock: mockgen
-	mockgen -source internal/selfhosted/oidc.go -destination internal/mock/oidc_mock.go -package mock
+	mockgen -source internal/client/aws.go -destination internal/mock/aws_mock.go -package mock
+
 
 
 .PHONY: manifests
