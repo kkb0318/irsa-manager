@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	irsav1alpha1 "github.com/kkb0318/irsa-manager/api/v1alpha1"
@@ -29,6 +30,8 @@ import (
 	"github.com/kkb0318/irsa-manager/internal/selfhosted"
 	"github.com/kkb0318/irsa-manager/internal/selfhosted/oidc"
 )
+
+const irsamanagerFinalizer = "irsa.kkb0318.github.io/finalizers"
 
 // IRSASetupReconciler reconciles a IRSASetup object
 type IRSASetupReconciler struct {
@@ -50,12 +53,27 @@ type IRSASetupReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.3/pkg/reconcile
-func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, retErr error) {
 	log := ctrllog.FromContext(ctx)
 	obj := &irsav1alpha1.IRSASetup{}
 	if err := r.Get(ctx, req.NamespacedName, obj); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	if !controllerutil.ContainsFinalizer(obj, irsamanagerFinalizer) {
+		controllerutil.AddFinalizer(obj, irsamanagerFinalizer)
+		if err := r.Update(ctx, obj); err != nil {
+			log.Error(err, "Failed to update custom resource to add finalizer")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	if !obj.DeletionTimestamp.IsZero() {
+		retErr = r.reconcileDelete(ctx, obj)
+		return
+	}
+
 	if err := r.reconcile(ctx, obj); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -67,6 +85,10 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *IRSASetupReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSASetup) error {
 	err := reconcileSelfhosted(ctx, obj, r.AwsClient)
 	return err
+}
+
+func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1alpha1.IRSASetup) error {
+	return nil
 }
 
 func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsClient awsclient.AwsClient) error {
