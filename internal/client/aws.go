@@ -29,8 +29,8 @@ type AwsS3API interface {
 }
 
 type AwsClient interface {
-	IamCient() *AwsIamClient
-	S3Cient(region, bucketName string) *AwsS3Client
+	IamClient() *AwsIamClient
+	S3Client(region, bucketName string) *AwsS3Client
 }
 
 func NewAwsClientFactory(ctx context.Context) (*AwsClientFactory, error) {
@@ -43,13 +43,13 @@ func NewAwsClientFactory(ctx context.Context) (*AwsClientFactory, error) {
 	return &AwsClientFactory{config: cfg}, nil
 }
 
-func (a *AwsClientFactory) IamCient() *AwsIamClient {
+func (a *AwsClientFactory) IamClient() *AwsIamClient {
 	return &AwsIamClient{
 		iam.NewFromConfig(a.config),
 	}
 }
 
-func (a *AwsClientFactory) S3Cient(bucketName, region string) *AwsS3Client {
+func (a *AwsClientFactory) S3Client(bucketName, region string) *AwsS3Client {
 	return &AwsS3Client{
 		s3.NewFromConfig(a.config),
 		region,

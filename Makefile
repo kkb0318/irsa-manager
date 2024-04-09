@@ -64,17 +64,13 @@ GOLANGCI_LINT_VERSION ?= v1.57.2
 
 
 .PHONY: all
-all: fmt vet lint generate manifests kustomize helmify generate-docs mock
+all: fmt vet lint generate manifests kustomize helmify generate-docs
 
 
 ##@ Development
 
 helm: manifests kustomize helmify
 	$(KUSTOMIZE) build config/release | $(HELMIFY) -crd-dir charts/irsa-manager
-
-.PHONY: mock
-mock: mockgen
-	mockgen -source internal/client/aws.go -destination internal/mock/aws_mock.go -package mock
 
 
 
@@ -96,7 +92,7 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
 	
 GOLANGCI_LINT = $(shell pwd)/bin/golangci-lint
 golangci-lint:
@@ -184,11 +180,6 @@ $(CONTROLLER_GEN): $(LOCALBIN)
 envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
 	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
-
-.PHONY: mockgen
-mockgen: $(MOCKGEN) ## Download envtest-setup locally if necessary.
-$(MOCKGEN): $(LOCALBIN)
-	test -s $(LOCALBIN)/mockgen || GOBIN=$(LOCALBIN) go install go.uber.org/mock/mockgen@latest
 
 .PHONY: helmify
 helmify: $(HELMIFY) ## Download helmify locally if necessary.
