@@ -10,22 +10,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
-type Handler struct {
-	cleanup bool
-	client  client.Client
-	owner   Owner
-}
-
-// NewHelper returns an initialized Helper.
-func NewHandler(c client.Client, owner Owner, cleanup bool) (*Handler, error) {
-	return &Handler{
-		cleanup: cleanup,
-		client:  c,
-		owner:   owner,
+func NewKubernetesClient(c client.Client, owner Owner) (*KubernetesClient, error) {
+	return &KubernetesClient{
+		client: c,
+		owner:  owner,
 	}, nil
 }
 
-func (h Handler) Apply(ctx context.Context, obj client.Object) error {
+func (h KubernetesClient) Apply(ctx context.Context, obj client.Object) error {
 	opts := []client.PatchOption{
 		client.ForceOwnership,
 		client.FieldOwner(h.owner.Field),
@@ -50,7 +42,7 @@ func (h Handler) Apply(ctx context.Context, obj client.Object) error {
 	return nil
 }
 
-func (h Handler) PatchStatus(ctx context.Context, obj client.Object) error {
+func (h KubernetesClient) PatchStatus(ctx context.Context, obj client.Object) error {
 	opts := &client.SubResourcePatchOptions{
 		PatchOptions: client.PatchOptions{
 			FieldManager: h.owner.Field,

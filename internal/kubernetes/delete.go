@@ -6,6 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kkb0318/irsa-manager/internal/handler"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -13,18 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// DeleteOptions contains options for delete requests.
-type DeleteOptions struct {
-	// DeletionPropagation decides how the garbage collector will handle the propagation.
-	DeletionPropagation metav1.DeletionPropagation
-
-	// Inclusions determines which in-cluster objects are subject to deletion
-	// based on the labels.
-	// A nil Inclusions map means all objects are subject to deletion
-	Inclusions map[string]string
-}
-
-func (h *Handler) DeleteAll(ctx context.Context, resources []*unstructured.Unstructured, opts DeleteOptions) error {
+func (h *KubernetesClient) DeleteAll(ctx context.Context, resources []*unstructured.Unstructured, opts handler.DeleteOptions) error {
 	if !h.cleanup {
 		return nil
 	}
@@ -38,7 +28,7 @@ func (h *Handler) DeleteAll(ctx context.Context, resources []*unstructured.Unstr
 }
 
 // Delete deletes the given object (not found errors are ignored).
-func (h *Handler) Delete(ctx context.Context, object *unstructured.Unstructured, opts DeleteOptions) error {
+func (h *KubernetesClient) Delete(ctx context.Context, object *unstructured.Unstructured, opts handler.DeleteOptions) error {
 	if !h.cleanup {
 		return nil
 	}

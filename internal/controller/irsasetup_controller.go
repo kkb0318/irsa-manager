@@ -27,6 +27,9 @@ import (
 
 	irsav1alpha1 "github.com/kkb0318/irsa-manager/api/v1alpha1"
 	awsclient "github.com/kkb0318/irsa-manager/internal/client"
+	"github.com/kkb0318/irsa-manager/internal/handler"
+	"github.com/kkb0318/irsa-manager/internal/kubernetes"
+	"github.com/kkb0318/irsa-manager/internal/manifests"
 	"github.com/kkb0318/irsa-manager/internal/selfhosted"
 	"github.com/kkb0318/irsa-manager/internal/selfhosted/oidc"
 )
@@ -53,11 +56,15 @@ type IRSASetupReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.3/pkg/reconcile
-func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, retErr error) {
+func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := ctrllog.FromContext(ctx)
 	obj := &irsav1alpha1.IRSASetup{}
 	if err := r.Get(ctx, req.NamespacedName, obj); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+	kubeClient, err := kubernetes.NewKubernetesClient(r.Client, kubernetes.Owner{Field: "irsa-manager"})
+	if err != nil {
+		return ctrl.Result{}, err
 	}
 
 	if !controllerutil.ContainsFinalizer(obj, irsamanagerFinalizer) {
@@ -70,11 +77,11 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if !obj.DeletionTimestamp.IsZero() {
-		retErr = r.reconcileDelete(ctx, obj)
-		return
+		err = r.reconcileDelete(ctx, obj)
+		return ctrl.Result{}, err
 	}
 
-	if err := r.reconcile(ctx, obj); err != nil {
+	if err := r.reconcile(ctx, obj, kubeClient); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -82,8 +89,8 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	return ctrl.Result{}, nil
 }
 
-func (r *IRSASetupReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSASetup) error {
-	err := reconcileSelfhosted(ctx, obj, r.AwsClient)
+func (r *IRSASetupReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSASetup, kubeClient *kubernetes.KubernetesClient) error {
+	err := reconcileSelfhosted(ctx, obj, r.AwsClient, kubeClient)
 	return err
 }
 
@@ -91,7 +98,7 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 	return nil
 }
 
-func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsClient awsclient.AwsClient) error {
+func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsClient awsclient.AwsClient, kubeClient *kubernetes.KubernetesClient) error {
 	keyPair, err := selfhosted.CreateKeyPair()
 	if err != nil {
 		return err
@@ -104,7 +111,17 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 	if err != nil {
 		return err
 	}
+	secret, err := manifests.NewSecretBuilder().WithSSHKey(*keyPair).Build("name", "default")
+	if err != nil {
+		return err
+	}
+	kubeHandler := handler.NewKubernetesHandler(kubeClient)
+	kubeHandler.Append(secret)
 	err = selfhosted.Execute(ctx, factory)
+	if err != nil {
+		return err
+	}
+	err = kubeHandler.ApplyAll(ctx)
 	if err != nil {
 		return err
 	}
