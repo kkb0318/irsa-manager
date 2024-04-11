@@ -4,13 +4,12 @@ import (
 	"context"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type KubernetesClient interface {
 	Apply(ctx context.Context, obj client.Object) error
-	Delete(ctx context.Context, obj *unstructured.Unstructured, opts DeleteOptions) error
+	Delete(ctx context.Context, obj client.Object, opts DeleteOptions) error
 }
 
 // DeleteOptions contains options for delete requests.

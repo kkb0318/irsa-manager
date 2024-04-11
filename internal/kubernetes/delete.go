@@ -14,27 +14,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (h *KubernetesClient) DeleteAll(ctx context.Context, resources []*unstructured.Unstructured, opts handler.DeleteOptions) error {
-	if !h.cleanup {
-		return nil
-	}
-	for _, r := range resources {
-		err := h.Delete(ctx, r, opts)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // Delete deletes the given object (not found errors are ignored).
-func (h *KubernetesClient) Delete(ctx context.Context, object *unstructured.Unstructured, opts handler.DeleteOptions) error {
-	if !h.cleanup {
-		return nil
+func (h *KubernetesClient) Delete(ctx context.Context, obj client.Object, opts handler.DeleteOptions) error {
+	u, err := h.toUnstructured(obj)
+	if err != nil {
+		return err
 	}
 	existingObject := &unstructured.Unstructured{}
-	existingObject.SetGroupVersionKind(object.GroupVersionKind())
-	err := h.client.Get(ctx, client.ObjectKeyFromObject(object), existingObject)
+	existingObject.SetGroupVersionKind(u.GroupVersionKind())
+	err = h.client.Get(ctx, client.ObjectKeyFromObject(u), existingObject)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return fmt.Errorf("failed to delete: %w", err)

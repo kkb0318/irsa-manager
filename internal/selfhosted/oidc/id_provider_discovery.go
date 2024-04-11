@@ -59,3 +59,9 @@ func (s *S3IdPDiscovery) Upload(ctx context.Context, o selfhosted.OIDCIdPDiscove
 	}
 	return nil
 }
+
+// DeleteStorage delete an S3 bucket
+func (s *S3IdPDiscovery) DeleteStorage(ctx context.Context) error {
+	// TODO:
+	return nil
+}

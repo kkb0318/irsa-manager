@@ -77,7 +77,10 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if !obj.DeletionTimestamp.IsZero() {
-		err = r.reconcileDelete(ctx, obj)
+		err = r.reconcileDelete(ctx, obj, kubeClient)
+		if err == nil {
+			log.Info("successfully deleted")
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -94,7 +97,25 @@ func (r *IRSASetupReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.I
 	return err
 }
 
-func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1alpha1.IRSASetup) error {
+func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1alpha1.IRSASetup, kubeClient *kubernetes.KubernetesClient) error {
+	factory, err := newOIDCIdpFactory(ctx, obj, nil, r.AwsClient)
+	if err != nil {
+		return err
+	}
+	secret, err := manifests.NewSecretBuilder().Build("name", "default")
+	if err != nil {
+		return err
+	}
+	kubeHandler := handler.NewKubernetesHandler(kubeClient)
+	kubeHandler.Append(secret)
+	err = selfhosted.Delete(ctx, factory)
+	if err != nil {
+		return err
+	}
+	err = kubeHandler.DeleteAll(ctx)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

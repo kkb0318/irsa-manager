@@ -24,3 +24,21 @@ func Execute(ctx context.Context, factory OIDCIdPFactory) error {
 	}
 	return nil
 }
+
+func Delete(ctx context.Context, factory OIDCIdPFactory) error {
+	issuerMeta := factory.IssuerMeta()
+	discovery := factory.IdPDiscovery()
+	idp, err := factory.IdP(issuerMeta)
+	if err != nil {
+		return err
+	}
+	err = discovery.DeleteStorage(ctx)
+	if err != nil {
+		return err
+	}
+	err = idp.Delete(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}

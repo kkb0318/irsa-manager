@@ -32,3 +32,8 @@ func (a *AwsIdP) Update(ctx context.Context) error {
 func (a *AwsIdP) IsUpdate() (bool, error) {
 	return false, nil
 }
+
+func (a *AwsIdP) Delete(ctx context.Context) error {
+	// TODO:
+	return nil
+}

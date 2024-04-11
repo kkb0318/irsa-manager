@@ -11,6 +11,7 @@ type OIDCIdP interface {
 	Create(ctx context.Context) (string, error)
 	IsUpdate() (bool, error)
 	Update(ctx context.Context) error
+	Delete(ctx context.Context) error
 }
 
 type OIDCIdPDiscoveryContents interface {
@@ -22,6 +23,7 @@ type OIDCIdPDiscoveryContents interface {
 type OIDCIdPDiscovery interface {
 	CreateStorage(ctx context.Context) error
 	Upload(ctx context.Context, o OIDCIdPDiscoveryContents) error
+	DeleteStorage(ctx context.Context) error
 }
 
 type OIDCIdPFactory interface {

@@ -21,12 +21,16 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -43,6 +47,8 @@ var (
 	cfg       *rest.Config
 	k8sClient client.Client
 	testEnv   *envtest.Environment
+	timeout   = time.Second * 10
+	ctx       = ctrl.SetupSignalHandler()
 )
 
 func TestControllers(t *testing.T) {
@@ -89,3 +95,21 @@ var _ = AfterSuite(func() {
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })
+
+func checkExist(expected types.NamespacedName, newFunc func() client.Object) {
+	Eventually(func() error {
+		found := newFunc()
+		return k8sClient.Get(ctx, expected, found)
+	}, timeout).Should(Succeed())
+}
+
+func checkNoExist(expected types.NamespacedName, newFunc func() client.Object) {
+	Eventually(func() error {
+		found := newFunc()
+		return k8sClient.Get(ctx, expected, found)
+	}, timeout).Should(Not(Succeed()))
+}
+
+func newSecret() client.Object {
+	return &corev1.Secret{}
+}

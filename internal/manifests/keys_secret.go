@@ -1,8 +1,6 @@
 package manifests
 
 import (
-	"fmt"
-
 	"github.com/kkb0318/irsa-manager/internal/selfhosted"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,9 +27,6 @@ func (b *SecretBuilder) WithSSHKey(keyPair selfhosted.KeyPair) *SecretBuilder {
 }
 
 func (b *SecretBuilder) Build(name, ns string) (*corev1.Secret, error) {
-	if b.data == nil {
-		return nil, fmt.Errorf("Secret.Data is empty")
-	}
 	secret := &corev1.Secret{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
