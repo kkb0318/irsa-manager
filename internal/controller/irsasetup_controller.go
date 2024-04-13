@@ -102,7 +102,7 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 	if err != nil {
 		return err
 	}
-	secret, err := manifests.NewSecretBuilder().Build("name", "default")
+	secret, err := manifests.NewSecretBuilder().Build("name", "default") // TODO:
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 	if err != nil {
 		return err
 	}
-	secret, err := manifests.NewSecretBuilder().WithSSHKey(*keyPair).Build("name", "default")
+	secret, err := manifests.NewSecretBuilder().WithSSHKey(*keyPair).Build("name", "default") // TODO:
 	if err != nil {
 		return err
 	}

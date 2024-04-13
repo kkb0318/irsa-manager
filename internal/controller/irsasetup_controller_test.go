@@ -75,6 +75,7 @@ var _ = Describe("IRSASetup Controller", func() {
 		It("should successfully reconcile the resource", func() {
 			awsClient := newMockAwsClient()
 			expected := []types.NamespacedName{
+				// TODO:
 				{Name: "name", Namespace: "default"},
 			}
 
@@ -118,11 +119,11 @@ func newMockAwsClient() awsclient.AwsClient {
 type mockAwsClient struct{}
 
 func (m *mockAwsClient) IamClient() *awsclient.AwsIamClient {
-	return &awsclient.AwsIamClient{AwsIamAPI: &mockAwsIamAPI{}}
+	return &awsclient.AwsIamClient{Client: &mockAwsIamAPI{}}
 }
 
 func (m *mockAwsClient) S3Client(region, bucketName string) *awsclient.AwsS3Client {
-	return &awsclient.AwsS3Client{AwsS3API: &mockAwsS3API{}}
+	return &awsclient.AwsS3Client{Client: &mockAwsS3API{}}
 }
 
 type (
@@ -147,5 +148,13 @@ func (m *mockAwsS3API) DeletePublicAccessBlock(ctx context.Context, params *s3.D
 }
 
 func (m *mockAwsS3API) PutBucketOwnershipControls(ctx context.Context, params *s3.PutBucketOwnershipControlsInput, optFns ...func(*s3.Options)) (*s3.PutBucketOwnershipControlsOutput, error) {
+	return nil, nil
+}
+
+func (m *mockAwsS3API) DeleteBucket(ctx context.Context, params *s3.DeleteBucketInput, optFns ...func(*s3.Options)) (*s3.DeleteBucketOutput, error) {
+	return nil, nil
+}
+
+func (m *mockAwsS3API) DeleteObjects(ctx context.Context, params *s3.DeleteObjectsInput, optFns ...func(*s3.Options)) (*s3.DeleteObjectsOutput, error) {
 	return nil, nil
 }
