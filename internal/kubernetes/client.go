@@ -5,7 +5,6 @@ import (
 )
 
 type KubernetesClient struct {
-	client  client.Client
-	owner   Owner
-	cleanup bool
+	client client.Client
+	owner  Owner
 }

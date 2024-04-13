@@ -138,9 +138,9 @@ func (a *AwsS3Client) DeleteBucket(ctx context.Context) error {
 
 // DeleteObjects removes a list of objects from a specified bucket.
 func (a *AwsS3Client) DeleteObjects(ctx context.Context, objectKeys []string) error {
-	var objectIds []types.ObjectIdentifier
-	for _, key := range objectKeys {
-		objectIds = append(objectIds, types.ObjectIdentifier{Key: aws.String(key)})
+	objectIds := make([]types.ObjectIdentifier, len(objectKeys))
+	for i, key := range objectKeys {
+		objectIds[i] = types.ObjectIdentifier{Key: aws.String(key)}
 	}
 	_, err := a.Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
 		Bucket: aws.String(a.bucketName),

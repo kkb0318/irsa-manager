@@ -76,7 +76,7 @@ var _ = Describe("IRSASetup Controller", func() {
 			awsClient := newMockAwsClient()
 			expected := []types.NamespacedName{
 				// TODO:
-				{Name: "name", Namespace: "default"},
+				{Name: "irsa-manager-key", Namespace: "kube-system"},
 			}
 
 			By("Reconciling the created resource")

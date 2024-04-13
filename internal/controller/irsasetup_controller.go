@@ -46,6 +46,7 @@ type IRSASetupReconciler struct {
 //+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsasetups,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsasetups/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsasetups/finalizers,verbs=update
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -102,7 +103,7 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 	if err != nil {
 		return err
 	}
-	secret, err := manifests.NewSecretBuilder().Build("name", "default") // TODO:
+	secret, err := manifests.NewSecretBuilder().Build(manifests.SshKeyNamespacedName())
 	if err != nil {
 		return err
 	}
@@ -132,7 +133,7 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 	if err != nil {
 		return err
 	}
-	secret, err := manifests.NewSecretBuilder().WithSSHKey(*keyPair).Build("name", "default") // TODO:
+	secret, err := manifests.NewSecretBuilder().WithSSHKey(*keyPair).Build(manifests.SshKeyNamespacedName())
 	if err != nil {
 		return err
 	}
