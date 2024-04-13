@@ -142,14 +142,12 @@ func (a *AwsS3Client) DeleteObjects(ctx context.Context, objectKeys []string) er
 	for _, key := range objectKeys {
 		objectIds = append(objectIds, types.ObjectIdentifier{Key: aws.String(key)})
 	}
-	output, err := a.Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+	_, err := a.Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
 		Bucket: aws.String(a.bucketName),
 		Delete: &types.Delete{Objects: objectIds},
 	})
 	if err != nil {
 		return err
-	} else {
-		log.Printf("Deleted %v objects.\n", len(output.Deleted))
 	}
 	return err
 }

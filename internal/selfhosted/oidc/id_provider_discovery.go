@@ -60,8 +60,18 @@ func (s *S3IdPDiscovery) Upload(ctx context.Context, o selfhosted.OIDCIdPDiscove
 	return nil
 }
 
-// DeleteStorage delete an S3 bucket
-func (s *S3IdPDiscovery) DeleteStorage(ctx context.Context) error {
-	// TODO:
+// Delete delete an S3 bucket and objects
+func (s *S3IdPDiscovery) Delete(ctx context.Context, o selfhosted.OIDCIdPDiscoveryContents) error {
+	err := s.s3Client.DeleteObjects(ctx, []string{
+		CONFIGURATION_PATH,
+		o.JWKsFileName(),
+	})
+	if err != nil {
+		return err
+	}
+	err = s.s3Client.DeleteBucket(ctx)
+	if err != nil {
+		return err
+	}
 	return nil
 }

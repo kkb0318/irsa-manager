@@ -28,11 +28,12 @@ func Execute(ctx context.Context, factory OIDCIdPFactory) error {
 func Delete(ctx context.Context, factory OIDCIdPFactory) error {
 	issuerMeta := factory.IssuerMeta()
 	discovery := factory.IdPDiscovery()
+	discoveryContents := factory.IdPDiscoveryContents(issuerMeta)
 	idp, err := factory.IdP(issuerMeta)
 	if err != nil {
 		return err
 	}
-	err = discovery.DeleteStorage(ctx)
+	err = discovery.Delete(ctx, discoveryContents)
 	if err != nil {
 		return err
 	}
