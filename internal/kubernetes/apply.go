@@ -6,13 +6,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewKubernetesClient(c client.Client, owner Owner) (*KubernetesClient, error) {
-	return &KubernetesClient{
-		client: c,
-		owner:  owner,
-	}, nil
-}
-
 func (h KubernetesClient) Apply(ctx context.Context, obj client.Object) error {
 	opts := []client.PatchOption{
 		client.ForceOwnership,

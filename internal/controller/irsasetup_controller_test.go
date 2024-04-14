@@ -108,6 +108,7 @@ var _ = Describe("IRSASetup Controller", func() {
 			for _, expect := range expected {
 				checkNoExist(expect, newSecret)
 			}
+			Expect(err).To(HaveOccurred())
 		})
 	})
 })

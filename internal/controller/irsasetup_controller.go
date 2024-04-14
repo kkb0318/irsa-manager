@@ -143,7 +143,7 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 	if err != nil {
 		return err
 	}
-	err = kubeHandler.ApplyAll(ctx)
+	err = kubeHandler.CreateAll(ctx)
 	if err != nil {
 		return err
 	}
