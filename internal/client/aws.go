@@ -26,11 +26,12 @@ type AwsIamAPI interface {
 
 type AwsS3API interface {
 	CreateBucket(ctx context.Context, params *s3.CreateBucketInput, optFns ...func(*s3.Options)) (*s3.CreateBucketOutput, error)
-	PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error)
 	DeletePublicAccessBlock(ctx context.Context, params *s3.DeletePublicAccessBlockInput, optFns ...func(*s3.Options)) (*s3.DeletePublicAccessBlockOutput, error)
-	PutBucketOwnershipControls(ctx context.Context, params *s3.PutBucketOwnershipControlsInput, optFns ...func(*s3.Options)) (*s3.PutBucketOwnershipControlsOutput, error)
 	DeleteBucket(ctx context.Context, params *s3.DeleteBucketInput, optFns ...func(*s3.Options)) (*s3.DeleteBucketOutput, error)
 	DeleteObjects(ctx context.Context, params *s3.DeleteObjectsInput, optFns ...func(*s3.Options)) (*s3.DeleteObjectsOutput, error)
+	HeadObject(ctx context.Context, params *s3.HeadObjectInput, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error)
+	PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error)
+	PutBucketOwnershipControls(ctx context.Context, params *s3.PutBucketOwnershipControlsInput, optFns ...func(*s3.Options)) (*s3.PutBucketOwnershipControlsOutput, error)
 }
 
 type AwsClient interface {
@@ -66,6 +67,40 @@ type AwsS3Client struct {
 	Client     AwsS3API
 	region     string
 	bucketName string
+}
+
+// CheckObjectExists checks if a specific object exists in the given bucket.
+func (a *AwsS3Client) CheckObjectExists(ctx context.Context, key string) (bool, error) {
+	_, err := a.Client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(a.bucketName),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		var nfe *types.NotFound
+		if errors.As(err, &nfe) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+// CreateObjectPublic creates a file to an S3 bucket and sets its access level to public read.
+// This means the file can be read by anyone on the internet.
+func (a *AwsS3Client) CreateObjectPublic(ctx context.Context, key string, body []byte) error {
+	exists, err := a.CheckObjectExists(ctx, key)
+	if err != nil {
+		return err
+	}
+	if exists {
+		log.Printf("skipped to create bucket object %s \n", key)
+	} else {
+		err := a.PutObjectPublic(ctx, key, body)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // PutObjectPublic uploads a file to an S3 bucket and sets its access level to public read.

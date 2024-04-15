@@ -37,7 +37,7 @@ func (s *S3IdPDiscovery) Upload(ctx context.Context, o selfhosted.OIDCIdPDiscove
 	if err != nil {
 		return nil
 	}
-	err = s.s3Client.PutObjectPublic(ctx,
+	err = s.s3Client.CreateObjectPublic(ctx,
 		CONFIGURATION_PATH,
 		discovery,
 	)
@@ -50,7 +50,7 @@ func (s *S3IdPDiscovery) Upload(ctx context.Context, o selfhosted.OIDCIdPDiscove
 	if err != nil {
 		return nil
 	}
-	err = s.s3Client.PutObjectPublic(ctx,
+	err = s.s3Client.CreateObjectPublic(ctx,
 		o.JWKsFileName(),
 		jwk,
 	)

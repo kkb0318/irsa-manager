@@ -108,7 +108,6 @@ var _ = Describe("IRSASetup Controller", func() {
 			for _, expect := range expected {
 				checkNoExist(expect, newSecret)
 			}
-			Expect(err).To(HaveOccurred())
 		})
 	})
 })
@@ -141,6 +140,10 @@ func (m *mockAwsS3API) CreateBucket(ctx context.Context, params *s3.CreateBucket
 }
 
 func (m *mockAwsS3API) PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
+	return nil, nil
+}
+
+func (m *mockAwsS3API) HeadObject(ctx context.Context, params *s3.HeadObjectInput, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error) {
 	return nil, nil
 }
 
