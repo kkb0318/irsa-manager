@@ -71,8 +71,14 @@ type SecretRef struct {
 
 // IRSASetupStatus defines the observed state of IRSASetup
 type IRSASetupStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	SelfHostedSetup CommonStatus `json:"selfHostedSetup,omitempty"`
+	CommonSetup     CommonStatus `json:"commonSetup,omitempty"`
+}
+
+// CommonStatus is a set of status attributes
+type CommonStatus struct {
+	Healthy bool     `json:"healthy"`
+	Errors  []string `json:"errors,omitempty"`
 }
 
 //+kubebuilder:object:root=true

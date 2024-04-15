@@ -1,6 +1,7 @@
 processor:
   ignoreTypes:
     - "List$"
+    - "CommonStatus"
   ignoreFields:
     - "status$"
     - "TypeMeta$"
