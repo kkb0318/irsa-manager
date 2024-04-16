@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -120,7 +121,16 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 	return nil
 }
 
+// reconcileSelfhosted ensures that the self-hosted resources are set up correctly.
+// This function performs the following operations based on the state of the object:
+// - If the self-hosted setup has previously succeeded, the function returns immediately without making changes.
+// - If the self-hosted setup was previously attempted but failed, or if it's being run for the first time, it will attempt to create all necessary resources. This includes the creation of key pairs, JWKs, OIDC IDP configurations, and Kubernetes secrets.
+// - The function enforces a 'force update' strategy in case of failures related to kubernetes Secrets creation or OIDC setup. This means it starts from scratch to ensure all components are correctly configured.
 func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsClient awsclient.AwsClient, kubeClient *kubernetes.KubernetesClient) error {
+	if irsav1alpha1.IsSelfHostedReadyConditionTrue(*obj) {
+		// Selfhosted Setup have already succeeded
+		return nil
+	}
 	keyPair, err := selfhosted.CreateKeyPair()
 	if err != nil {
 		return err
@@ -139,14 +149,37 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 	}
 	kubeHandler := handler.NewKubernetesHandler(kubeClient)
 	kubeHandler.Append(secret)
+
+	var e error
+	var reason irsav1alpha1.SelfHostedReason
+	defer func() {
+		if e != nil {
+			*obj = irsav1alpha1.IRSASetupSelfHostedNotReady(*obj, string(reason), e.Error())
+		}
+	}()
+
+	var forceUpdate bool
+	condition := irsav1alpha1.IRSASetupSelfHostedReadyStatus(*obj)
+	switch irsav1alpha1.SelfHostedReason(condition.Reason) {
+	case irsav1alpha1.SelfHostedReasonFailedKeys, irsav1alpha1.SelfHostedReasonFailedOidc:
+		forceUpdate = true
+	default:
+		forceUpdate = false
+	}
+	fmt.Println(forceUpdate) // TODO: force Update logic
 	err = selfhosted.Execute(ctx, factory)
 	if err != nil {
+		e = err
+		reason = irsav1alpha1.SelfHostedReasonFailedOidc
 		return err
 	}
 	err = kubeHandler.CreateAll(ctx)
 	if err != nil {
+		e = err
+		reason = irsav1alpha1.SelfHostedReasonFailedKeys
 		return err
 	}
+	*obj = irsav1alpha1.IRSASetupSelfHostedReady(*obj, "SelfHostedSetupReady", e.Error())
 	return nil
 }
 

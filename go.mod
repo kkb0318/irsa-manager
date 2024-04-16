@@ -1,8 +1,8 @@
 module github.com/kkb0318/irsa-manager
 
-go 1.21
+go 1.22
 
-toolchain go1.21.8
+toolchain go1.22.2
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.26.1
@@ -10,6 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/iam v1.32.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.53.1
 	github.com/aws/smithy-go v1.20.2
+	github.com/fluxcd/pkg/apis/meta v1.4.0
 	github.com/go-jose/go-jose/v4 v4.0.1
 	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/onsi/gomega v1.30.0
