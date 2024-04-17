@@ -2,7 +2,7 @@ package selfhosted
 
 import "context"
 
-func Execute(ctx context.Context, factory OIDCIdPFactory) error {
+func Execute(ctx context.Context, factory OIDCIdPFactory, forceUpdate bool) error {
 	issuerMeta := factory.IssuerMeta()
 	discovery := factory.IdPDiscovery()
 	discoveryContents := factory.IdPDiscoveryContents(issuerMeta)
@@ -14,7 +14,7 @@ func Execute(ctx context.Context, factory OIDCIdPFactory) error {
 	if err != nil {
 		return err
 	}
-	err = discovery.Upload(ctx, discoveryContents)
+	err = discovery.Upload(ctx, discoveryContents, forceUpdate)
 	if err != nil {
 		return err
 	}

@@ -81,7 +81,7 @@ func (in *IRSASetup) GetSelfhostedStatusConditions() *[]metav1.Condition {
 	return &in.Status.SelfHostedSetup
 }
 
-func IRSASetupSelfHostedReady(irsa IRSASetup, reason, message string) IRSASetup {
+func SetupSelfHostedStatusReady(irsa IRSASetup, reason, message string) IRSASetup {
 	newCondition := metav1.Condition{
 		Type:    meta.ReadyCondition,
 		Status:  metav1.ConditionTrue,
@@ -92,7 +92,7 @@ func IRSASetupSelfHostedReady(irsa IRSASetup, reason, message string) IRSASetup 
 	return irsa
 }
 
-func IRSASetupSelfHostedNotReady(irsa IRSASetup, reason, message string) IRSASetup {
+func SelfHostedStatusNotReady(irsa IRSASetup, reason, message string) IRSASetup {
 	newCondition := metav1.Condition{
 		Type:    meta.ReadyCondition,
 		Status:  metav1.ConditionFalse,
@@ -103,13 +103,25 @@ func IRSASetupSelfHostedNotReady(irsa IRSASetup, reason, message string) IRSASet
 	return irsa
 }
 
-// IRSASetupSelfHostedReadyStatus
-func IRSASetupSelfHostedReadyStatus(irsa IRSASetup) *metav1.Condition {
+// SelfHostedReadyStatus
+func SelfHostedReadyStatus(irsa IRSASetup) *metav1.Condition {
 	if c := apimeta.FindStatusCondition(irsa.Status.SelfHostedSetup, meta.ReadyCondition); c != nil {
-		// return c, c.Status == metav1.ConditionTrue
 		return c
 	}
 	return nil
+}
+
+// HasConditionReason
+func HasConditionReason(cond *metav1.Condition, reasons ...string) bool {
+	if cond == nil {
+		return false
+	}
+	for _, reason := range reasons {
+		if cond.Reason == reason {
+			return true
+		}
+	}
+	return false
 }
 
 func IsSelfHostedReadyConditionTrue(irsa IRSASetup) bool {
@@ -121,6 +133,7 @@ type SelfHostedReason string
 const (
 	SelfHostedReasonFailedOidc SelfHostedReason = "SelfHostedSetupFailedOidcCreation"
 	SelfHostedReasonFailedKeys SelfHostedReason = "SelfHostedSetupFailedKeysCreation"
+	SelfHostedReasonReady      SelfHostedReason = "SelfHostedSetupReady"
 )
 
 //+kubebuilder:object:root=true

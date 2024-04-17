@@ -85,18 +85,41 @@ func (a *AwsS3Client) CheckObjectExists(ctx context.Context, key string) (bool, 
 	return true, nil
 }
 
+type ObjectInput struct {
+	Key  string
+	Body []byte
+}
+
+func (a *AwsS3Client) CreateObjectsPublic(ctx context.Context, inputs []ObjectInput) error {
+	for _, input := range inputs {
+		if err := a.CreateObjectPublic(ctx, input); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // CreateObjectPublic creates a file to an S3 bucket and sets its access level to public read.
 // This means the file can be read by anyone on the internet.
-func (a *AwsS3Client) CreateObjectPublic(ctx context.Context, key string, body []byte) error {
-	exists, err := a.CheckObjectExists(ctx, key)
+func (a *AwsS3Client) CreateObjectPublic(ctx context.Context, input ObjectInput) error {
+	exists, err := a.CheckObjectExists(ctx, input.Key)
 	if err != nil {
 		return err
 	}
 	if exists {
-		log.Printf("skipped to create bucket object %s \n", key)
+		log.Printf("skipped to create bucket object %s \n", input.Key)
 	} else {
-		err := a.PutObjectPublic(ctx, key, body)
+		err := a.PutObjectPublic(ctx, input)
 		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (a *AwsS3Client) PutObjectsPublic(ctx context.Context, inputs []ObjectInput) error {
+	for _, input := range inputs {
+		if err := a.PutObjectPublic(ctx, input); err != nil {
 			return err
 		}
 	}
@@ -105,12 +128,12 @@ func (a *AwsS3Client) CreateObjectPublic(ctx context.Context, key string, body [
 
 // PutObjectPublic uploads a file to an S3 bucket and sets its access level to public read.
 // This means the file can be read by anyone on the internet.
-func (a *AwsS3Client) PutObjectPublic(ctx context.Context, key string, body []byte) error {
+func (a *AwsS3Client) PutObjectPublic(ctx context.Context, input ObjectInput) error {
 	_, err := a.Client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:      aws.String(a.bucketName),
-		Key:         aws.String(key),
+		Key:         aws.String(input.Key),
 		ACL:         types.ObjectCannedACLPublicRead,
-		Body:        bytes.NewReader(body),
+		Body:        bytes.NewReader(input.Body),
 		ContentType: aws.String("application/json"),
 	})
 	return err

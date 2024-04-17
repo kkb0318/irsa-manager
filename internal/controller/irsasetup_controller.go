@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -154,32 +153,32 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 	var reason irsav1alpha1.SelfHostedReason
 	defer func() {
 		if e != nil {
-			*obj = irsav1alpha1.IRSASetupSelfHostedNotReady(*obj, string(reason), e.Error())
+			*obj = irsav1alpha1.SelfHostedStatusNotReady(*obj, string(reason), e.Error())
 		}
 	}()
 
-	var forceUpdate bool
-	condition := irsav1alpha1.IRSASetupSelfHostedReadyStatus(*obj)
-	switch irsav1alpha1.SelfHostedReason(condition.Reason) {
-	case irsav1alpha1.SelfHostedReasonFailedKeys, irsav1alpha1.SelfHostedReasonFailedOidc:
-		forceUpdate = true
-	default:
-		forceUpdate = false
-	}
-	fmt.Println(forceUpdate) // TODO: force Update logic
-	err = selfhosted.Execute(ctx, factory)
+	forceUpdate := irsav1alpha1.HasConditionReason(
+		irsav1alpha1.SelfHostedReadyStatus(*obj),
+		string(irsav1alpha1.SelfHostedReasonFailedKeys),
+		string(irsav1alpha1.SelfHostedReasonFailedOidc),
+	)
+	err = selfhosted.Execute(ctx, factory, forceUpdate)
 	if err != nil {
 		e = err
 		reason = irsav1alpha1.SelfHostedReasonFailedOidc
 		return err
 	}
-	err = kubeHandler.CreateAll(ctx)
+	if forceUpdate {
+		err = kubeHandler.ApplyAll(ctx)
+	} else {
+		err = kubeHandler.CreateAll(ctx)
+	}
 	if err != nil {
 		e = err
 		reason = irsav1alpha1.SelfHostedReasonFailedKeys
 		return err
 	}
-	*obj = irsav1alpha1.IRSASetupSelfHostedReady(*obj, "SelfHostedSetupReady", e.Error())
+	*obj = irsav1alpha1.SetupSelfHostedStatusReady(*obj, string(irsav1alpha1.SelfHostedReasonReady), "successfully setup resources for self-hosted")
 	return nil
 }
 

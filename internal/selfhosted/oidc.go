@@ -22,7 +22,7 @@ type OIDCIdPDiscoveryContents interface {
 
 type OIDCIdPDiscovery interface {
 	CreateStorage(ctx context.Context) error
-	Upload(ctx context.Context, o OIDCIdPDiscoveryContents) error
+	Upload(ctx context.Context, o OIDCIdPDiscoveryContents, forceUpdate bool) error
 	Delete(ctx context.Context, o OIDCIdPDiscoveryContents) error
 }
 

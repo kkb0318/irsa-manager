@@ -32,30 +32,32 @@ func (s *S3IdPDiscovery) CreateStorage(ctx context.Context) error {
 
 // Upload uploads the OIDC provider's discovery configuration and JSON Web Key Set (JWKS) to the specified AWS S3 bucket.
 // This method is responsible for uploading the necessary OIDC configuration files to S3, making them accessible for OIDC clients.
-func (s *S3IdPDiscovery) Upload(ctx context.Context, o selfhosted.OIDCIdPDiscoveryContents) error {
+func (s *S3IdPDiscovery) Upload(ctx context.Context, o selfhosted.OIDCIdPDiscoveryContents, forceUpdate bool) error {
 	discovery, err := o.Discovery()
 	if err != nil {
 		return nil
 	}
-	err = s.s3Client.CreateObjectPublic(ctx,
-		CONFIGURATION_PATH,
-		discovery,
-	)
-	if err != nil {
-		return fmt.Errorf("unable to upload discovery document, %w", err)
-	}
-
-	// Uplaod JWK
 	jwk, err := o.JWK()
 	if err != nil {
 		return nil
 	}
-	err = s.s3Client.CreateObjectPublic(ctx,
-		o.JWKsFileName(),
-		jwk,
-	)
+	inputs := []client.ObjectInput{
+		{
+			Key:  CONFIGURATION_PATH,
+			Body: discovery,
+		},
+		{
+			Key:  o.JWKsFileName(),
+			Body: jwk,
+		},
+	}
+	if forceUpdate {
+		err = s.s3Client.PutObjectsPublic(ctx, inputs)
+	} else {
+		err = s.s3Client.CreateObjectsPublic(ctx, inputs)
+	}
 	if err != nil {
-		return fmt.Errorf("unable to upload JWK, %w", err)
+		return fmt.Errorf("unable to upload object, %w", err)
 	}
 	return nil
 }
