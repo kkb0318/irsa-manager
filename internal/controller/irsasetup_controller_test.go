@@ -22,6 +22,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -126,13 +127,26 @@ func (m *mockAwsClient) S3Client(region, bucketName string) *awsclient.AwsS3Clie
 	return &awsclient.AwsS3Client{Client: &mockAwsS3API{}}
 }
 
+func (m *mockAwsClient) StsClient() *awsclient.AwsStsClient {
+	return &awsclient.AwsStsClient{Client: &mockAwsStsAPI{}}
+}
+
 type (
 	mockAwsIamAPI struct{}
 	mockAwsS3API  struct{}
+	mockAwsStsAPI struct{}
 )
 
 func (m *mockAwsIamAPI) CreateOpenIDConnectProvider(ctx context.Context, params *iam.CreateOpenIDConnectProviderInput, optFns ...func(*iam.Options)) (*iam.CreateOpenIDConnectProviderOutput, error) {
 	return &iam.CreateOpenIDConnectProviderOutput{OpenIDConnectProviderArn: aws.String("arn::mock")}, nil
+}
+
+func (m *mockAwsIamAPI) DeleteOpenIDConnectProvider(ctx context.Context, params *iam.DeleteOpenIDConnectProviderInput, optFns ...func(*iam.Options)) (*iam.DeleteOpenIDConnectProviderOutput, error) {
+	return &iam.DeleteOpenIDConnectProviderOutput{}, nil
+}
+
+func (m *mockAwsStsAPI) GetCallerIdentity(ctx context.Context, params *sts.GetCallerIdentityInput, optFns ...func(*sts.Options)) (*sts.GetCallerIdentityOutput, error) {
+	return &sts.GetCallerIdentityOutput{Account: aws.String("123456789012")}, nil
 }
 
 func (m *mockAwsS3API) CreateBucket(ctx context.Context, params *s3.CreateBucketInput, optFns ...func(*s3.Options)) (*s3.CreateBucketOutput, error) {

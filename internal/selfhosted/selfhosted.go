@@ -18,7 +18,7 @@ func Execute(ctx context.Context, factory OIDCIdPFactory, forceUpdate bool) erro
 	if err != nil {
 		return err
 	}
-	_, err = idp.Create(ctx)
+	err = idp.Create(ctx)
 	if err != nil {
 		return err
 	}

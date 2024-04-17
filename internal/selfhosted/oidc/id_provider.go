@@ -9,20 +9,22 @@ import (
 
 type AwsIdP struct {
 	iamClient  *client.AwsIamClient
+	stsClient  *client.AwsStsClient
 	issuerMeta selfhosted.OIDCIssuerMeta
 }
 
 func NewAwsIdP(awsConfig client.AwsClient, issuerMeta selfhosted.OIDCIssuerMeta) (*AwsIdP, error) {
 	iamClient := awsConfig.IamClient()
-	return &AwsIdP{iamClient, issuerMeta}, nil
+	stsClient := awsConfig.StsClient()
+	return &AwsIdP{iamClient, stsClient, issuerMeta}, nil
 }
 
-func (a *AwsIdP) Create(ctx context.Context) (string, error) {
-	arn, err := a.iamClient.CreateOIDCProvider(ctx, a.issuerMeta.IssuerUrl())
+func (a *AwsIdP) Create(ctx context.Context) error {
+	err := a.iamClient.CreateOIDCProvider(ctx, a.issuerMeta.IssuerUrl())
 	if err != nil {
-		return "", err
+		return err
 	}
-	return arn, nil
+	return nil
 }
 
 func (a *AwsIdP) Update(ctx context.Context) error {
@@ -34,6 +36,9 @@ func (a *AwsIdP) IsUpdate() (bool, error) {
 }
 
 func (a *AwsIdP) Delete(ctx context.Context) error {
-	// TODO:
-	return nil
+	accountId, err := a.stsClient.GetAccountId()
+	if err != nil {
+		return err
+	}
+	return a.iamClient.DeleteOIDCProvider(ctx, accountId, a.issuerMeta.IssuerHostPath())
 }

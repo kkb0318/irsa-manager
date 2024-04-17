@@ -8,7 +8,7 @@ type OIDCIssuerMeta interface {
 }
 
 type OIDCIdP interface {
-	Create(ctx context.Context) (string, error)
+	Create(ctx context.Context) error
 	IsUpdate() (bool, error)
 	Update(ctx context.Context) error
 	Delete(ctx context.Context) error

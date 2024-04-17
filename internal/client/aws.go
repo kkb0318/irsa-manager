@@ -11,8 +11,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
+	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/aws/smithy-go"
 )
 
@@ -22,6 +24,11 @@ type AwsClientFactory struct {
 
 type AwsIamAPI interface {
 	CreateOpenIDConnectProvider(ctx context.Context, params *iam.CreateOpenIDConnectProviderInput, optFns ...func(*iam.Options)) (*iam.CreateOpenIDConnectProviderOutput, error)
+	DeleteOpenIDConnectProvider(ctx context.Context, params *iam.DeleteOpenIDConnectProviderInput, optFns ...func(*iam.Options)) (*iam.DeleteOpenIDConnectProviderOutput, error)
+}
+
+type AwsStsAPI interface {
+	GetCallerIdentity(ctx context.Context, params *sts.GetCallerIdentityInput, optFns ...func(*sts.Options)) (*sts.GetCallerIdentityOutput, error)
 }
 
 type AwsS3API interface {
@@ -36,6 +43,7 @@ type AwsS3API interface {
 
 type AwsClient interface {
 	IamClient() *AwsIamClient
+	StsClient() *AwsStsClient
 	S3Client(region, bucketName string) *AwsS3Client
 }
 
@@ -55,6 +63,12 @@ func (a *AwsClientFactory) IamClient() *AwsIamClient {
 	}
 }
 
+func (a *AwsClientFactory) StsClient() *AwsStsClient {
+	return &AwsStsClient{
+		sts.NewFromConfig(a.config),
+	}
+}
+
 func (a *AwsClientFactory) S3Client(bucketName, region string) *AwsS3Client {
 	return &AwsS3Client{
 		s3.NewFromConfig(a.config),
@@ -63,6 +77,12 @@ func (a *AwsClientFactory) S3Client(bucketName, region string) *AwsS3Client {
 	}
 }
 
+type AwsIamClient struct {
+	Client AwsIamAPI
+}
+type AwsStsClient struct {
+	Client AwsStsAPI
+}
 type AwsS3Client struct {
 	Client     AwsS3API
 	region     string
@@ -218,13 +238,9 @@ func (a *AwsS3Client) Region() string {
 	return a.region
 }
 
-type AwsIamClient struct {
-	Client AwsIamAPI
-}
-
 // CreateOIDCProvider creates an OpenID Connect (OIDC) provider in AWS IAM.
-func (a *AwsIamClient) CreateOIDCProvider(ctx context.Context, providerUrl string) (string, error) {
-	result, err := a.Client.CreateOpenIDConnectProvider(ctx, &iam.CreateOpenIDConnectProviderInput{
+func (a *AwsIamClient) CreateOIDCProvider(ctx context.Context, providerUrl string) error {
+	_, err := a.Client.CreateOpenIDConnectProvider(ctx, &iam.CreateOpenIDConnectProviderInput{
 		Url:          &providerUrl,
 		ClientIDList: []string{"sts.amazonaws.com"},
 		ThumbprintList: []string{
@@ -232,7 +248,32 @@ func (a *AwsIamClient) CreateOIDCProvider(ctx context.Context, providerUrl strin
 		},
 	})
 	if err != nil {
+		var entityAlreadyExists *iamtypes.EntityAlreadyExistsException
+		if errors.As(err, &entityAlreadyExists) {
+			log.Println("skipped error", err)
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+
+// DeleteOIDCProvider deletes an OpenID Connect (OIDC) provider in AWS IAM.
+func (a *AwsIamClient) DeleteOIDCProvider(ctx context.Context, accountId, issuerHostPath string) error {
+	_, err := a.Client.DeleteOpenIDConnectProvider(ctx, &iam.DeleteOpenIDConnectProviderInput{
+		OpenIDConnectProviderArn: aws.String(fmt.Sprintf("arn:aws:iam::%s:oidc-provider/%s", accountId, issuerHostPath)),
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *AwsStsClient) GetAccountId() (string, error) {
+	req, err := a.Client.GetCallerIdentity(context.TODO(), &sts.GetCallerIdentityInput{})
+	if err != nil {
 		return "", err
 	}
-	return *result.OpenIDConnectProviderArn, nil
+
+	return *req.Account, nil
 }
