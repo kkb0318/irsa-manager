@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
@@ -132,12 +133,21 @@ func (m *mockAwsClient) StsClient() *awsclient.AwsStsClient {
 }
 
 type (
-	mockAwsIamAPI struct{}
-	mockAwsS3API  struct{}
-	mockAwsStsAPI struct{}
+	mockAwsIamAPI struct {
+		isCreateOidcErr bool
+	}
+	mockAwsS3API struct {
+		isCreateBucketErr bool
+	}
+	mockAwsStsAPI struct {
+		isErr bool
+	}
 )
 
 func (m *mockAwsIamAPI) CreateOpenIDConnectProvider(ctx context.Context, params *iam.CreateOpenIDConnectProviderInput, optFns ...func(*iam.Options)) (*iam.CreateOpenIDConnectProviderOutput, error) {
+	if m.isCreateOidcErr {
+		return nil, fmt.Errorf("create Oidc error")
+	}
 	return &iam.CreateOpenIDConnectProviderOutput{OpenIDConnectProviderArn: aws.String("arn::mock")}, nil
 }
 
@@ -150,6 +160,9 @@ func (m *mockAwsStsAPI) GetCallerIdentity(ctx context.Context, params *sts.GetCa
 }
 
 func (m *mockAwsS3API) CreateBucket(ctx context.Context, params *s3.CreateBucketInput, optFns ...func(*s3.Options)) (*s3.CreateBucketOutput, error) {
+	if m.isCreateBucketErr {
+		return nil, fmt.Errorf("create bucket error")
+	}
 	return nil, nil
 }
 
