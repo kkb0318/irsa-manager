@@ -9,11 +9,10 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/aws/smithy-go"
 )
@@ -41,54 +40,6 @@ type AwsS3API interface {
 	PutBucketOwnershipControls(ctx context.Context, params *s3.PutBucketOwnershipControlsInput, optFns ...func(*s3.Options)) (*s3.PutBucketOwnershipControlsOutput, error)
 }
 
-type AwsClient interface {
-	IamClient() *AwsIamClient
-	StsClient() *AwsStsClient
-	S3Client(region, bucketName string) *AwsS3Client
-}
-
-func NewAwsClientFactory(ctx context.Context) (*AwsClientFactory, error) {
-	cfg, err := config.LoadDefaultConfig(
-		ctx,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("unable to load SDK config, %w", err)
-	}
-	return &AwsClientFactory{config: cfg}, nil
-}
-
-func (a *AwsClientFactory) IamClient() *AwsIamClient {
-	return &AwsIamClient{
-		iam.NewFromConfig(a.config),
-	}
-}
-
-func (a *AwsClientFactory) StsClient() *AwsStsClient {
-	return &AwsStsClient{
-		sts.NewFromConfig(a.config),
-	}
-}
-
-func (a *AwsClientFactory) S3Client(bucketName, region string) *AwsS3Client {
-	return &AwsS3Client{
-		s3.NewFromConfig(a.config),
-		region,
-		bucketName,
-	}
-}
-
-type AwsIamClient struct {
-	Client AwsIamAPI
-}
-type AwsStsClient struct {
-	Client AwsStsAPI
-}
-type AwsS3Client struct {
-	Client     AwsS3API
-	region     string
-	bucketName string
-}
-
 // CheckObjectExists checks if a specific object exists in the given bucket.
 func (a *AwsS3Client) CheckObjectExists(ctx context.Context, key string) (bool, error) {
 	_, err := a.Client.HeadObject(ctx, &s3.HeadObjectInput{
@@ -96,7 +47,7 @@ func (a *AwsS3Client) CheckObjectExists(ctx context.Context, key string) (bool, 
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		var nfe *types.NotFound
+		var nfe *s3types.NotFound
 		if errors.As(err, &nfe) {
 			return false, nil
 		}
@@ -152,7 +103,7 @@ func (a *AwsS3Client) PutObjectPublic(ctx context.Context, input ObjectInput) er
 	_, err := a.Client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:      aws.String(a.bucketName),
 		Key:         aws.String(input.Key),
-		ACL:         types.ObjectCannedACLPublicRead,
+		ACL:         s3types.ObjectCannedACLPublicRead,
 		Body:        bytes.NewReader(input.Body),
 		ContentType: aws.String("application/json"),
 	})
@@ -165,12 +116,12 @@ func (a *AwsS3Client) CreateBucketPublic(ctx context.Context) error {
 	bucket := aws.String(a.bucketName)
 	_, err := a.Client.CreateBucket(ctx, &s3.CreateBucketInput{
 		Bucket: bucket,
-		CreateBucketConfiguration: &types.CreateBucketConfiguration{
-			LocationConstraint: types.BucketLocationConstraint(a.Region()),
+		CreateBucketConfiguration: &s3types.CreateBucketConfiguration{
+			LocationConstraint: s3types.BucketLocationConstraint(a.Region()),
 		},
 	})
 	if err != nil {
-		var bucketAlreadyOwnedByYou *types.BucketAlreadyOwnedByYou
+		var bucketAlreadyOwnedByYou *s3types.BucketAlreadyOwnedByYou
 		if errors.As(err, &bucketAlreadyOwnedByYou) {
 			log.Println("skipped error", err)
 		} else {
@@ -183,10 +134,10 @@ func (a *AwsS3Client) CreateBucketPublic(ctx context.Context) error {
 	}
 	_, err = a.Client.PutBucketOwnershipControls(ctx, &s3.PutBucketOwnershipControlsInput{
 		Bucket: bucket,
-		OwnershipControls: &types.OwnershipControls{
-			Rules: []types.OwnershipControlsRule{
+		OwnershipControls: &s3types.OwnershipControls{
+			Rules: []s3types.OwnershipControlsRule{
 				{
-					ObjectOwnership: types.ObjectOwnershipBucketOwnerPreferred,
+					ObjectOwnership: s3types.ObjectOwnershipBucketOwnerPreferred,
 				},
 			},
 		},
@@ -216,13 +167,13 @@ func (a *AwsS3Client) DeleteBucket(ctx context.Context) error {
 
 // DeleteObjects removes a list of objects from a specified bucket.
 func (a *AwsS3Client) DeleteObjects(ctx context.Context, objectKeys []string) error {
-	objectIds := make([]types.ObjectIdentifier, len(objectKeys))
+	objectIds := make([]s3types.ObjectIdentifier, len(objectKeys))
 	for i, key := range objectKeys {
-		objectIds[i] = types.ObjectIdentifier{Key: aws.String(key)}
+		objectIds[i] = s3types.ObjectIdentifier{Key: aws.String(key)}
 	}
 	_, err := a.Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
 		Bucket: aws.String(a.bucketName),
-		Delete: &types.Delete{Objects: objectIds},
+		Delete: &s3types.Delete{Objects: objectIds},
 	})
 	if err != nil {
 		return err

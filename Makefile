@@ -48,6 +48,7 @@ HELM_DOCS ?= $(LOCALBIN)/helm-docs
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 HELMIFY ?= $(LOCALBIN)/helmify
 CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs
+MOCKGEN ?= $(LOCALBIN)/mockgen
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.2.1
@@ -72,6 +73,10 @@ all: fmt vet lint generate manifests kustomize helmify generate-docs
 helm: manifests kustomize helmify
 	$(KUSTOMIZE) build config/release | $(HELMIFY) -crd-dir charts/irsa-manager
 
+
+.PHONY: mock
+mock: mockgen 
+	$(MOCKGEN) -source internal/client/aws.go -destination internal/mock/aws_mock.go -package mock
 
 
 .PHONY: manifests
@@ -175,6 +180,11 @@ controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessar
 $(CONTROLLER_GEN): $(LOCALBIN)
 	test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
 	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+
+.PHONY: mockgen
+mockgen: $(MOCKGEN) 
+$(MOCKGEN): $(LOCALBIN)
+	test -s $(LOCALBIN)/mockgen || GOBIN=$(LOCALBIN) go install go.uber.org/mock/mockgen@latest
 
 .PHONY: envtest
 envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
