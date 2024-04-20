@@ -75,9 +75,7 @@ var _ = Describe("IRSASetup Controller", func() {
 		})
 
 		It("should successfully reconcile the resource", func() {
-			awsClient := newMockAwsClient()
 			expected := []types.NamespacedName{
-				// TODO:
 				{Name: "irsa-manager-key", Namespace: "kube-system"},
 			}
 
@@ -85,7 +83,7 @@ var _ = Describe("IRSASetup Controller", func() {
 			controllerReconciler := &IRSASetupReconciler{
 				Client:    k8sClient,
 				Scheme:    k8sClient.Scheme(),
-				AwsClient: awsClient,
+				AwsClient: newMockAwsClient(&mockAwsIamAPI{}, &mockAwsS3API{}, &mockAwsStsAPI{}),
 			}
 
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
@@ -111,33 +109,90 @@ var _ = Describe("IRSASetup Controller", func() {
 				checkNoExist(expect, newSecret)
 			}
 		})
+
+		It("should successfully reconcile the resource", func() {
+			expected := []types.NamespacedName{
+				{Name: "irsa-manager-key", Namespace: "kube-system"},
+			}
+
+			By("Reconciling the created resource")
+			controllerReconciler := &IRSASetupReconciler{
+				Client:    k8sClient,
+				Scheme:    k8sClient.Scheme(),
+				AwsClient: newMockAwsClient(&mockAwsIamAPI{}, &mockAwsS3API{}, &mockAwsStsAPI{}),
+			}
+
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typeNamespacedName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			By("Reconciling with the AwsClient error")
+			controllerReconciler.AwsClient = newMockAwsClient(&mockAwsIamAPI{createOidcErr: true}, &mockAwsS3API{}, &mockAwsStsAPI{})
+			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typeNamespacedName,
+			})
+			Expect(err).To(HaveOccurred())
+			for _, expect := range expected {
+				checkNoExist(expect, newSecret)
+			}
+			By("Reconciling successfully")
+			controllerReconciler.AwsClient = newMockAwsClient(&mockAwsIamAPI{}, &mockAwsS3API{}, &mockAwsStsAPI{})
+			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typeNamespacedName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			for _, expect := range expected {
+				checkExist(expect, newSecret)
+			}
+			By("removing the custom resource for the Kind")
+			Eventually(func() error {
+				return k8sClient.Delete(ctx, irsasetup)
+			}, timeout).Should(Succeed())
+			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typeNamespacedName,
+			})
+			Expect(err).To(Not(HaveOccurred()))
+			for _, expect := range expected {
+				checkNoExist(expect, newSecret)
+			}
+		})
 	})
 })
 
-func newMockAwsClient() awsclient.AwsClient {
-	return &mockAwsClient{}
+func newMockAwsClient(iam *mockAwsIamAPI, s3 *mockAwsS3API, sts *mockAwsStsAPI) awsclient.AwsClient {
+	return &mockAwsClient{
+		iam,
+		s3,
+		sts,
+	}
 }
 
-type mockAwsClient struct{}
+type mockAwsClient struct {
+	iam *mockAwsIamAPI
+	s3  *mockAwsS3API
+	sts *mockAwsStsAPI
+}
 
 func (m *mockAwsClient) IamClient() *awsclient.AwsIamClient {
-	return &awsclient.AwsIamClient{Client: &mockAwsIamAPI{}}
+	return &awsclient.AwsIamClient{Client: m.iam}
 }
 
 func (m *mockAwsClient) S3Client(region, bucketName string) *awsclient.AwsS3Client {
-	return &awsclient.AwsS3Client{Client: &mockAwsS3API{}}
+	return &awsclient.AwsS3Client{Client: m.s3}
 }
 
 func (m *mockAwsClient) StsClient() *awsclient.AwsStsClient {
-	return &awsclient.AwsStsClient{Client: &mockAwsStsAPI{}}
+	return &awsclient.AwsStsClient{Client: m.sts}
 }
 
 type (
 	mockAwsIamAPI struct {
-		isCreateOidcErr bool
+		createOidcErr bool
+		deleteOidcErr bool
 	}
 	mockAwsS3API struct {
-		isCreateBucketErr bool
+		createBucketErr bool
+		deleteBucketErr bool
 	}
 	mockAwsStsAPI struct {
 		isErr bool
@@ -145,13 +200,16 @@ type (
 )
 
 func (m *mockAwsIamAPI) CreateOpenIDConnectProvider(ctx context.Context, params *iam.CreateOpenIDConnectProviderInput, optFns ...func(*iam.Options)) (*iam.CreateOpenIDConnectProviderOutput, error) {
-	if m.isCreateOidcErr {
+	if m.createOidcErr {
 		return nil, fmt.Errorf("create Oidc error")
 	}
 	return &iam.CreateOpenIDConnectProviderOutput{OpenIDConnectProviderArn: aws.String("arn::mock")}, nil
 }
 
 func (m *mockAwsIamAPI) DeleteOpenIDConnectProvider(ctx context.Context, params *iam.DeleteOpenIDConnectProviderInput, optFns ...func(*iam.Options)) (*iam.DeleteOpenIDConnectProviderOutput, error) {
+	if m.deleteOidcErr {
+		return nil, fmt.Errorf("delete Oidc error")
+	}
 	return &iam.DeleteOpenIDConnectProviderOutput{}, nil
 }
 
@@ -160,7 +218,7 @@ func (m *mockAwsStsAPI) GetCallerIdentity(ctx context.Context, params *sts.GetCa
 }
 
 func (m *mockAwsS3API) CreateBucket(ctx context.Context, params *s3.CreateBucketInput, optFns ...func(*s3.Options)) (*s3.CreateBucketOutput, error) {
-	if m.isCreateBucketErr {
+	if m.createBucketErr {
 		return nil, fmt.Errorf("create bucket error")
 	}
 	return nil, nil
@@ -183,6 +241,9 @@ func (m *mockAwsS3API) PutBucketOwnershipControls(ctx context.Context, params *s
 }
 
 func (m *mockAwsS3API) DeleteBucket(ctx context.Context, params *s3.DeleteBucketInput, optFns ...func(*s3.Options)) (*s3.DeleteBucketOutput, error) {
+	if m.deleteBucketErr {
+		return nil, fmt.Errorf("delete bucket error")
+	}
 	return nil, nil
 }
 
