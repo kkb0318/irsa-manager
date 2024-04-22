@@ -233,9 +233,7 @@ type (
 		createBucketErr bool
 		deleteBucketErr bool
 	}
-	mockAwsStsAPI struct {
-		isErr bool
-	}
+	mockAwsStsAPI struct{}
 )
 
 func (m *mockAwsIamAPI) CreateOpenIDConnectProvider(ctx context.Context, params *iam.CreateOpenIDConnectProviderInput, optFns ...func(*iam.Options)) (*iam.CreateOpenIDConnectProviderOutput, error) {
