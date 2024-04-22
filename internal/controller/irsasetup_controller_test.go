@@ -45,10 +45,10 @@ var _ = Describe("IRSASetup Controller", func() {
 			f    func(*IRSASetupReconciler, *irsav1alpha1.IRSASetup)
 		}{
 			{
-				name: "case1",
+				name: "should reconcile successfully",
 				obj: &irsav1alpha1.IRSASetup{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-resource11",
+						Name:      "test-resource1",
 						Namespace: "default",
 					},
 					Spec: irsav1alpha1.IRSASetupSpec{
@@ -76,6 +76,62 @@ var _ = Describe("IRSASetup Controller", func() {
 						NamespacedName: typeNamespacedName,
 					})
 					Expect(err).NotTo(HaveOccurred())
+					_, err = r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).NotTo(HaveOccurred())
+					for _, expect := range expected {
+						checkExist(expect, newSecret)
+					}
+					By("removing the custom resource for the Kind")
+					Eventually(func() error {
+						return k8sClient.Delete(ctx, obj)
+					}, timeout).Should(Succeed())
+					_, err = r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).To(Not(HaveOccurred()))
+					for _, expect := range expected {
+						checkNoExist(expect, newSecret)
+					}
+				},
+			},
+			{
+				name: "case2",
+				obj: &irsav1alpha1.IRSASetup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-resource2",
+						Namespace: "default",
+					},
+					Spec: irsav1alpha1.IRSASetupSpec{
+						Mode: "selfhoted",
+						Discovery: irsav1alpha1.Discovery{
+							S3: irsav1alpha1.S3Discovery{
+								Region:     "ap-northeast-1",
+								BucketName: "irsa-manager-kkb-1",
+							},
+						},
+					},
+				},
+				f: func(r *IRSASetupReconciler, obj *irsav1alpha1.IRSASetup) {
+					expected := []types.NamespacedName{
+						{Name: "irsa-manager-key", Namespace: "kube-system"},
+					}
+					typeNamespacedName := types.NamespacedName{
+						Name:      obj.Name,
+						Namespace: obj.Namespace,
+					}
+					By("Reconciling with the AwsClient error")
+					r.AwsClient = newMockAwsClient(&mockAwsIamAPI{createOidcErr: true}, &mockAwsS3API{}, &mockAwsStsAPI{})
+					_, err := r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).To(HaveOccurred())
+					for _, expect := range expected {
+						checkNoExist(expect, newSecret)
+					}
+					By("Reconciling successfully")
+					r.AwsClient = newMockAwsClient(&mockAwsIamAPI{}, &mockAwsS3API{}, &mockAwsStsAPI{})
 					_, err = r.Reconcile(ctx, reconcile.Request{
 						NamespacedName: typeNamespacedName,
 					})
@@ -138,153 +194,6 @@ var _ = Describe("IRSASetup Controller", func() {
 		BeforeEach(func() {
 		})
 		AfterEach(func() {
-		})
-		It("should successfully reconcile the resource", func() {
-			const resourceName = "test-resource"
-
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: "default",
-			}
-			irsasetup := &irsav1alpha1.IRSASetup{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: "default",
-				},
-			}
-			By("creating the custom resource for the Kind IRSASetup")
-			err := k8sClient.Get(ctx, typeNamespacedName, irsasetup)
-			if err != nil && errors.IsNotFound(err) {
-				resource := &irsav1alpha1.IRSASetup{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: "default",
-					},
-					Spec: irsav1alpha1.IRSASetupSpec{
-						Mode: "selfhoted",
-						Discovery: irsav1alpha1.Discovery{
-							S3: irsav1alpha1.S3Discovery{
-								Region:     "ap-northeast-1",
-								BucketName: "irsa-manager-kkb-1",
-							},
-						},
-					},
-				}
-				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-			}
-
-			expected := []types.NamespacedName{
-				{Name: "irsa-manager-key", Namespace: "kube-system"},
-			}
-
-			By("Reconciling the created resource")
-			controllerReconciler := &IRSASetupReconciler{
-				Client:    k8sClient,
-				Scheme:    k8sClient.Scheme(),
-				AwsClient: newMockAwsClient(&mockAwsIamAPI{}, &mockAwsS3API{}, &mockAwsStsAPI{}),
-			}
-
-			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).NotTo(HaveOccurred())
-			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).NotTo(HaveOccurred())
-			for _, expect := range expected {
-				checkExist(expect, newSecret)
-			}
-			By("removing the custom resource for the Kind")
-			Eventually(func() error {
-				return k8sClient.Delete(ctx, irsasetup)
-			}, timeout).Should(Succeed())
-			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).To(Not(HaveOccurred()))
-			for _, expect := range expected {
-				checkNoExist(expect, newSecret)
-			}
-		})
-
-		It("should successfully reconcile the resource", func() {
-			const resourceName = "test-resource2"
-
-			typeNamespacedName := types.NamespacedName{
-				Name:      resourceName,
-				Namespace: "default",
-			}
-			irsasetup := &irsav1alpha1.IRSASetup{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: "default",
-				},
-			}
-			By("creating the custom resource for the Kind IRSASetup")
-			err := k8sClient.Get(ctx, typeNamespacedName, irsasetup)
-			if err != nil && errors.IsNotFound(err) {
-				resource := &irsav1alpha1.IRSASetup{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: "default",
-					},
-					Spec: irsav1alpha1.IRSASetupSpec{
-						Mode: "selfhoted",
-						Discovery: irsav1alpha1.Discovery{
-							S3: irsav1alpha1.S3Discovery{
-								Region:     "ap-northeast-1",
-								BucketName: "irsa-manager-kkb-1",
-							},
-						},
-					},
-				}
-				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-			}
-			expected := []types.NamespacedName{
-				{Name: "irsa-manager-key", Namespace: "kube-system"},
-			}
-
-			By("Reconciling the created resource")
-			controllerReconciler := &IRSASetupReconciler{
-				Client:    k8sClient,
-				Scheme:    k8sClient.Scheme(),
-				AwsClient: newMockAwsClient(&mockAwsIamAPI{}, &mockAwsS3API{}, &mockAwsStsAPI{}),
-			}
-
-			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).NotTo(HaveOccurred())
-			By("Reconciling with the AwsClient error")
-			controllerReconciler.AwsClient = newMockAwsClient(&mockAwsIamAPI{createOidcErr: true}, &mockAwsS3API{}, &mockAwsStsAPI{})
-			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).To(HaveOccurred())
-			for _, expect := range expected {
-				checkNoExist(expect, newSecret)
-			}
-			By("Reconciling successfully")
-			controllerReconciler.AwsClient = newMockAwsClient(&mockAwsIamAPI{}, &mockAwsS3API{}, &mockAwsStsAPI{})
-			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).NotTo(HaveOccurred())
-			for _, expect := range expected {
-				checkExist(expect, newSecret)
-			}
-			By("removing the custom resource for the Kind")
-			Eventually(func() error {
-				return k8sClient.Delete(ctx, irsasetup)
-			}, timeout).Should(Succeed())
-			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).To(Not(HaveOccurred()))
-			for _, expect := range expected {
-				checkNoExist(expect, newSecret)
-			}
 		})
 	})
 })
