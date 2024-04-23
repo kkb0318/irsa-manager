@@ -15,7 +15,7 @@ IMAGE_TAG_BASE ?= kkb0318.github.io/irsa-manager
 
 
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= ghcr.io/kkb0318/irsa-manager:latest
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -65,7 +65,7 @@ GOLANGCI_LINT_VERSION ?= v1.57.2
 
 
 .PHONY: all
-all: fmt vet lint generate manifests kustomize helmify generate-docs
+all: fmt vet lint generate manifests kustomize helmify generate-docs mock
 
 
 ##@ Development
