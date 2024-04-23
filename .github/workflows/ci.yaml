@@ -1,0 +1,16 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - "main"
+jobs:
+  test:
+    name: Unit, Integration Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: make test
