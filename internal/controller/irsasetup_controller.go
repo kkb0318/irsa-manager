@@ -109,14 +109,16 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 	}
 	kubeHandler := handler.NewKubernetesHandler(kubeClient)
 	kubeHandler.Append(secret)
-	err = selfhosted.Delete(ctx, factory)
-	if err != nil {
-		return err
-	}
 	err = kubeHandler.DeleteAll(ctx)
 	if err != nil {
 		return err
 	}
+	err = selfhosted.Delete(ctx, factory)
+	if err != nil {
+		return err
+	}
+	controllerutil.RemoveFinalizer(obj, irsamanagerFinalizer)
+
 	return nil
 }
 

@@ -52,7 +52,7 @@ var _ = Describe("IRSASetup Controller", func() {
 						Namespace: "default",
 					},
 					Spec: irsav1alpha1.IRSASetupSpec{
-						Mode: "selfhoted",
+						Mode: "selfhosted",
 						Discovery: irsav1alpha1.Discovery{
 							S3: irsav1alpha1.S3Discovery{
 								Region:     "ap-northeast-1",
