@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -157,11 +158,9 @@ func (a *AwsS3Client) DeleteBucket(ctx context.Context) error {
 	})
 	if err != nil {
 		var ae smithy.APIError
-		var nfe *s3types.NoSuchBucket
-		if errors.As(err, &ae) && ae.ErrorCode() == "BucketNotEmpty" {
-			log.Println("skipped error", err)
-		}
-		if errors.As(err, &nfe) {
+		errorCodes := []string{"BucketNotEmpty", "NoSuchBucket"}
+		if errors.As(err, &ae) && slices.Contains(errorCodes, ae.ErrorCode()) {
+			log.Println("Deletion skipped: ", err)
 			return nil
 		}
 		return err
@@ -180,6 +179,11 @@ func (a *AwsS3Client) DeleteObjects(ctx context.Context, objectKeys []string) er
 		Delete: &s3types.Delete{Objects: objectIds},
 	})
 	if err != nil {
+		var ae smithy.APIError
+		if errors.As(err, &ae) && ae.ErrorCode() == "NoSuchBucket" {
+			log.Println("Deletion skipped: the bucket does not exist.", err)
+			return nil
+		}
 		return err
 	}
 	return err
@@ -219,6 +223,11 @@ func (a *AwsIamClient) DeleteOIDCProvider(ctx context.Context, accountId, issuer
 		OpenIDConnectProviderArn: aws.String(fmt.Sprintf("arn:aws:iam::%s:oidc-provider/%s", accountId, issuerHostPath)),
 	})
 	if err != nil {
+		var ae smithy.APIError
+		if errors.As(err, &ae) && ae.ErrorCode() == "NoSuchEntity" {
+			log.Println("Deletion skipped: ", err)
+			return nil
+		}
 		return err
 	}
 	return nil
