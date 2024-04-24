@@ -15,18 +15,20 @@ type AwsS3IdPFactory struct {
 	jwksFileName string
 }
 
-func NewAwsS3IdpFactory(ctx context.Context,
-	region, bucketName string,
+func NewAwsS3IdpFactory(
+	ctx context.Context,
+	region,
+	bucketName string,
 	jwk *selfhosted.JWK,
 	jwksFileName string,
 	awsClient awsclient.AwsClient,
 ) (*AwsS3IdPFactory, error) {
 	return &AwsS3IdPFactory{
-		region,
-		bucketName,
-		awsClient,
-		jwk,
-		jwksFileName,
+		region:       region,
+		bucketName:   bucketName,
+		awsClient:    awsClient,
+		jwk:          jwk,
+		jwksFileName: jwksFileName,
 	}, nil
 }
 

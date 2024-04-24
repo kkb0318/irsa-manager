@@ -3,8 +3,11 @@ package client
 import (
 	"context"
 	"fmt"
+	"os"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
@@ -35,6 +38,12 @@ func NewAwsClientFactory(ctx context.Context) (*AwsClientFactory, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to load SDK config, %w", err)
 	}
+	roleArn := os.Getenv("AWS_ROLE_ARN")
+	if roleArn != "" {
+		stsSvc := sts.NewFromConfig(cfg)
+		creds := stscreds.NewAssumeRoleProvider(stsSvc, roleArn)
+		cfg.Credentials = aws.NewCredentialsCache(creds)
+	}
 	return &AwsClientFactory{config: cfg}, nil
 }
 
@@ -50,10 +59,10 @@ func (a *AwsClientFactory) StsClient() *AwsStsClient {
 	}
 }
 
-func (a *AwsClientFactory) S3Client(bucketName, region string) *AwsS3Client {
+func (a *AwsClientFactory) S3Client(region, bucketName string) *AwsS3Client {
 	return &AwsS3Client{
-		s3.NewFromConfig(a.config),
-		region,
-		bucketName,
+		Client:     s3.NewFromConfig(a.config),
+		region:     region,
+		bucketName: bucketName,
 	}
 }

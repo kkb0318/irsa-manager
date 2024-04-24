@@ -63,6 +63,11 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err := r.Get(ctx, req.NamespacedName, obj); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	awsClient, err := awsclient.NewAwsClientFactory(ctx)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	r.AwsClient = awsClient
 	kubeClient, err := kubernetes.NewKubernetesClient(r.Client, kubernetes.Owner{Field: "irsa-manager"})
 	if err != nil {
 		return ctrl.Result{}, err
@@ -128,10 +133,13 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 // - If the self-hosted setup was previously attempted but failed, or if it's being run for the first time, it will attempt to create all necessary resources. This includes the creation of key pairs, JWKs, OIDC IDP configurations, and Kubernetes secrets.
 // - The function enforces a 'force update' strategy in case of failures related to kubernetes Secrets creation or OIDC setup. This means it starts from scratch to ensure all components are correctly configured.
 func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsClient awsclient.AwsClient, kubeClient *kubernetes.KubernetesClient) error {
+	log := ctrllog.FromContext(ctx)
 	if irsav1alpha1.IsSelfHostedReadyConditionTrue(*obj) {
 		// Selfhosted Setup have already succeeded
+		log.Info("the self-hosted resources have already set up")
 		return nil
 	}
+	log.Info("the self-hosted resources are setting up")
 	keyPair, err := selfhosted.CreateKeyPair()
 	if err != nil {
 		return err
@@ -181,6 +189,7 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 		return err
 	}
 	*obj = irsav1alpha1.SetupSelfHostedStatusReady(*obj, string(irsav1alpha1.SelfHostedReasonReady), "successfully setup resources for self-hosted")
+	log.Info("the self-hosted resources have successfully set up")
 	return nil
 }
 

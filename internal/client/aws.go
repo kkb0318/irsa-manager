@@ -113,6 +113,7 @@ func (a *AwsS3Client) PutObjectPublic(ctx context.Context, input ObjectInput) er
 // CreateBucketPublic creates a new S3 bucket with public access settings in the specified region.
 // The function configures the bucket to have its ownership controlled by the bucket creator.
 func (a *AwsS3Client) CreateBucketPublic(ctx context.Context) error {
+	log.Printf("creating S3 bucket... Name: %s, Region: %s \n", a.bucketName, a.Region())
 	bucket := aws.String(a.bucketName)
 	_, err := a.Client.CreateBucket(ctx, &s3.CreateBucketInput{
 		Bucket: bucket,
