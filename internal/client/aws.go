@@ -157,11 +157,14 @@ func (a *AwsS3Client) DeleteBucket(ctx context.Context) error {
 	})
 	if err != nil {
 		var ae smithy.APIError
+		var nfe *s3types.NoSuchBucket
 		if errors.As(err, &ae) && ae.ErrorCode() == "BucketNotEmpty" {
 			log.Println("skipped error", err)
-		} else {
-			return err
 		}
+		if errors.As(err, &nfe) {
+			return nil
+		}
+		return err
 	}
 	return nil
 }

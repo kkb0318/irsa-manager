@@ -63,11 +63,13 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err := r.Get(ctx, req.NamespacedName, obj); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	awsClient, err := awsclient.NewAwsClientFactory(ctx)
-	if err != nil {
-		return ctrl.Result{}, err
+	if r.AwsClient == nil {
+		awsClient, err := awsclient.NewAwsClientFactory(ctx)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		r.AwsClient = awsClient
 	}
-	r.AwsClient = awsClient
 	kubeClient, err := kubernetes.NewKubernetesClient(r.Client, kubernetes.Owner{Field: "irsa-manager"})
 	if err != nil {
 		return ctrl.Result{}, err
@@ -123,8 +125,7 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 		return err
 	}
 	controllerutil.RemoveFinalizer(obj, irsamanagerFinalizer)
-
-	return nil
+	return r.Update(ctx, obj)
 }
 
 // reconcileSelfhosted ensures that the self-hosted resources are set up correctly.
