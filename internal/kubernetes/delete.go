@@ -14,8 +14,8 @@ import (
 )
 
 // Delete deletes the given object (not found errors are ignored).
-func (h *KubernetesClient) Delete(ctx context.Context, obj client.Object, opts handler.DeleteOptions) error {
-	existingObj, err := h.Get(ctx, obj)
+func (c *KubernetesClient) Delete(ctx context.Context, obj client.Object, opts handler.DeleteOptions) error {
+	existingObj, err := c.Get(ctx, obj)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return fmt.Errorf("failed to delete: %w", err)
@@ -32,7 +32,7 @@ func (h *KubernetesClient) Delete(ctx context.Context, obj client.Object, opts h
 		return nil
 	}
 
-	if err := h.client.Delete(ctx, existingObj, client.PropagationPolicy(opts.DeletionPropagation)); err != nil {
+	if err := c.client.Delete(ctx, existingObj, client.PropagationPolicy(opts.DeletionPropagation)); err != nil {
 		return fmt.Errorf("delete failed: %w", err)
 	}
 

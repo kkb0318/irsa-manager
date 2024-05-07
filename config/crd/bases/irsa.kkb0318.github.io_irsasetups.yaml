@@ -15,7 +15,7 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.selfHostedSetup.conditions[?(@.type=="Ready")].status
+    - jsonPath: .status.selfHostedSetup[?(@.type=="Ready")].status
       name: SelfHostedReady
       type: string
     name: v1alpha1

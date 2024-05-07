@@ -14,9 +14,9 @@ type KubernetesHandler struct {
 	objs   []client.Object
 }
 
-func NewKubernetesHandler(k KubernetesClient) *KubernetesHandler {
+func NewKubernetesHandler(c KubernetesClient) *KubernetesHandler {
 	return &KubernetesHandler{
-		client: k,
+		client: c,
 		objs:   []client.Object{},
 	}
 }

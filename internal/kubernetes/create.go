@@ -6,15 +6,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (h KubernetesClient) Create(ctx context.Context, obj client.Object) error {
+func (c KubernetesClient) Create(ctx context.Context, obj client.Object) error {
 	opts := []client.CreateOption{
-		client.FieldOwner(h.owner.Field),
+		client.FieldOwner(c.owner.Field),
 	}
-	u, err := h.toUnstructured(obj)
+	u, err := c.toUnstructured(obj)
 	if err != nil {
 		return err
 	}
-	err = h.client.Create(ctx, u, opts...)
+	err = c.client.Create(ctx, u, opts...)
 	if err != nil {
 		return err
 	}

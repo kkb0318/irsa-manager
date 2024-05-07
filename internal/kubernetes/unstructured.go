@@ -8,8 +8,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
-func (h KubernetesClient) toUnstructured(obj client.Object) (*unstructured.Unstructured, error) {
-	gvk, err := apiutil.GVKForObject(obj, h.client.Scheme())
+func (c KubernetesClient) toUnstructured(obj client.Object) (*unstructured.Unstructured, error) {
+	gvk, err := apiutil.GVKForObject(obj, c.client.Scheme())
 	if err != nil {
 		return nil, err
 	}

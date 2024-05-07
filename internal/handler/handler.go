@@ -15,6 +15,10 @@ type KubernetesClient interface {
 	Delete(ctx context.Context, obj client.Object, opts DeleteOptions) error
 }
 
+type StatusClient interface {
+	PatchStatus(ctx context.Context, obj client.Object) error
+}
+
 // DeleteOptions contains options for delete requests.
 type DeleteOptions struct {
 	// DeletionPropagation decides how the garbage collector will handle the propagation.

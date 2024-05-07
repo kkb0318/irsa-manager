@@ -138,7 +138,7 @@ const (
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="SelfHostedReady",type="string",JSONPath=".status.selfHostedSetup.conditions[?(@.type==\"Ready\")].status",description=""
+//+kubebuilder:printcolumn:name="SelfHostedReady",type="string",JSONPath=".status.selfHostedSetup[?(@.type==\"Ready\")].status",description=""
 
 // IRSASetup represents a configuration for setting up IAM Roles for Service Accounts (IRSA) in a Kubernetes cluster.
 type IRSASetup struct {

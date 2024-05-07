@@ -84,6 +84,16 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{Requeue: true}, nil
 	}
 
+	defer func() {
+		if err := r.Get(ctx, req.NamespacedName, &irsav1alpha1.IRSASetup{}); err != nil {
+			return
+		}
+		statusHandler := handler.NewStatusHandler(kubeClient)
+		if err := statusHandler.Patch(ctx, obj); err != nil {
+			return
+		}
+	}()
+
 	if !obj.DeletionTimestamp.IsZero() {
 		err = r.reconcileDelete(ctx, obj, kubeClient)
 		if err == nil {
