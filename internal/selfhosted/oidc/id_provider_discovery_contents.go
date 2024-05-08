@@ -45,7 +45,7 @@ func (p *IdPDiscoveryContents) Discovery() ([]byte, error) {
 }
 
 func (p *IdPDiscoveryContents) JWK() ([]byte, error) {
-	jsonData, err := json.MarshalIndent(p.jwk.GetKeys(), "", "  ")
+	jsonData, err := json.MarshalIndent(p.jwk, "", "  ")
 	if err != nil {
 		return nil, err
 	}

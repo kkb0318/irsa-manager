@@ -121,7 +121,7 @@ var _ = Describe("IRSASetup Controller", func() {
 						Name:      obj.Name,
 						Namespace: obj.Namespace,
 					}
-					By("Reconciling with the AwsClient error")
+					By("secret does not exist when reconciling with the AwsClient error")
 					r.AwsClient = newMockAwsClient(&mockAwsIamAPI{createOidcErr: true}, &mockAwsS3API{}, &mockAwsStsAPI{})
 					_, err := r.Reconcile(ctx, reconcile.Request{
 						NamespacedName: typeNamespacedName,
@@ -130,7 +130,7 @@ var _ = Describe("IRSASetup Controller", func() {
 					for _, expect := range expected {
 						checkNoExist(expect, newSecret)
 					}
-					By("Reconciling successfully")
+					By("successfully Reconciling")
 					r.AwsClient = newMockAwsClient(&mockAwsIamAPI{}, &mockAwsS3API{}, &mockAwsStsAPI{})
 					_, err = r.Reconcile(ctx, reconcile.Request{
 						NamespacedName: typeNamespacedName,

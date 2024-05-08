@@ -76,7 +76,3 @@ func NewJWK(pub []byte) (*JWK, error) {
 	})
 	return &JWK{Keys: keys}, nil
 }
-
-func (j *JWK) GetKeys() []jose.JSONWebKey {
-	return j.Keys
-}
