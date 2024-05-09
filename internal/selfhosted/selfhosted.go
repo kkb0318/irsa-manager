@@ -2,11 +2,11 @@ package selfhosted
 
 import "context"
 
-func Execute(ctx context.Context, factory OIDCIdPFactory, forceUpdate bool) error {
-	issuerMeta := factory.IssuerMeta()
-	discovery := factory.IdPDiscovery()
-	discoveryContents := factory.IdPDiscoveryContents(issuerMeta)
-	idp, err := factory.IdP(issuerMeta)
+func Execute(ctx context.Context, idpComponentsFactory OIDCIdPFactory, forceUpdate bool) error {
+	issuerMeta := idpComponentsFactory.IssuerMeta()
+	discovery := idpComponentsFactory.IdPDiscovery()
+	discoveryContents := idpComponentsFactory.IdPDiscoveryContents(issuerMeta)
+	idp, err := idpComponentsFactory.IdP(issuerMeta)
 	if err != nil {
 		return err
 	}

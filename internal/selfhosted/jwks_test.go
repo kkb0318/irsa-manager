@@ -22,7 +22,7 @@ func TestJWK(t *testing.T) {
 			expected: rsaKeyID,
 		},
 		{
-			name:      "rsa",
+			name:      "no rsa",
 			filename:  "testdata/ecdsa.pub",
 			expectErr: true,
 		},
