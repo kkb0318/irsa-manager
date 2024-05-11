@@ -19,6 +19,11 @@ type SecretBuilder struct {
 	secretType corev1.SecretType
 }
 
+type TlsCredential interface {
+	Certificate() []byte
+	PrivateKey() []byte
+}
+
 func NewSecretBuilder() *SecretBuilder {
 	return &SecretBuilder{
 		secretType: corev1.SecretTypeOpaque,
@@ -31,6 +36,15 @@ func (b *SecretBuilder) WithSSHKey(keyPair selfhosted.KeyPair) *SecretBuilder {
 		corev1.SSHAuthPrivateKey: keyPair.PrivateKey(),
 	}
 	b.secretType = corev1.SecretTypeSSHAuth
+	return b
+}
+
+func (b *SecretBuilder) WithCertificate(t TlsCredential) *SecretBuilder {
+	b.data = map[string][]byte{
+		"tls.crt": t.Certificate(),
+		"tls.key": t.PrivateKey(),
+	}
+	b.secretType = corev1.SecretTypeTLS
 	return b
 }
 

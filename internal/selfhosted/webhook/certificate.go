@@ -13,30 +13,30 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-type TlsCredentials struct {
+type TlsCredential struct {
 	privateKey  []byte
 	certificate []byte
 }
 
-func (t *TlsCredentials) CaBundle() string {
+func (t TlsCredential) CaBundle() string {
 	return base64.StdEncoding.EncodeToString(t.certificate)
 }
 
-func (t *TlsCredentials) Certificate() []byte {
+func (t TlsCredential) Certificate() []byte {
 	return t.certificate
 }
 
-func (t *TlsCredentials) PrivateKey() []byte {
+func (t TlsCredential) PrivateKey() []byte {
 	return t.privateKey
 }
 
-func CreateTlsCredential(serviceNamespacedName types.NamespacedName) (TlsCredentials, error) {
+func CreateTlsCredential(serviceNamespacedName types.NamespacedName) (TlsCredential, error) {
 	certificatePeriod := 365 // days
 
 	// Generate RSA private key
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		return TlsCredentials{}, err
+		return TlsCredential{}, err
 	}
 
 	// Define certificate template
@@ -56,7 +56,7 @@ func CreateTlsCredential(serviceNamespacedName types.NamespacedName) (TlsCredent
 	// Create the certificate
 	certBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
 	if err != nil {
-		return TlsCredentials{}, err
+		return TlsCredential{}, err
 	}
 
 	// Encode the private key to PEM format
@@ -71,5 +71,5 @@ func CreateTlsCredential(serviceNamespacedName types.NamespacedName) (TlsCredent
 		Bytes: certBytes,
 	})
 
-	return TlsCredentials{privateKey: privPemBytes, certificate: certPemBytes}, nil
+	return TlsCredential{privateKey: privPemBytes, certificate: certPemBytes}, nil
 }
