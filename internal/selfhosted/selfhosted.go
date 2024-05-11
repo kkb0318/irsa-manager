@@ -1,6 +1,8 @@
 package selfhosted
 
-import "context"
+import (
+	"context"
+)
 
 func Execute(ctx context.Context, idpComponentsFactory OIDCIdPFactory, forceUpdate bool) error {
 	issuerMeta := idpComponentsFactory.IssuerMeta()

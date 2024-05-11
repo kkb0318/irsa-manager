@@ -32,6 +32,7 @@ import (
 	"github.com/kkb0318/irsa-manager/internal/manifests"
 	"github.com/kkb0318/irsa-manager/internal/selfhosted"
 	"github.com/kkb0318/irsa-manager/internal/selfhosted/oidc"
+	"github.com/kkb0318/irsa-manager/internal/selfhosted/webhook"
 )
 
 const irsamanagerFinalizer = "irsa.kkb0318.github.io/finalizers"
@@ -47,6 +48,11 @@ type IRSASetupReconciler struct {
 //+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsasetups/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsasetups/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="apps",resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=clusterroles,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=clusterrolebindings,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="admissionregistration.k8s.io",resources=mutatingwebhookconfigurations,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -169,6 +175,15 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 	}
 	kubeHandler := handler.NewKubernetesHandler(kubeClient)
 	kubeHandler.Append(secret)
+
+	// for webhook setup
+	webhookSetup, err := webhook.NewWebHookSetup()
+	if err != nil {
+		return err
+	}
+	for _, r := range webhookSetup.Resources() {
+		kubeHandler.Append(r)
+	}
 
 	var e error
 	var reason irsav1alpha1.SelfHostedReason

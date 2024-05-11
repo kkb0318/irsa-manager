@@ -6,7 +6,7 @@ import (
 
 	"github.com/goccy/go-yaml"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/admissionregistration/v1beta1"
+	regv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -84,7 +84,7 @@ func TestBaseManifests(t *testing.T) {
 }
 
 func testMutatingWebhookConfiguration() client.Object {
-	return &v1beta1.MutatingWebhookConfiguration{}
+	return &regv1.MutatingWebhookConfiguration{}
 }
 
 func testService() client.Object {

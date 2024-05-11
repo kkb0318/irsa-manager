@@ -1,7 +1,7 @@
 package webhook
 
 import (
-	"k8s.io/api/admissionregistration/v1beta1"
+	regv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -46,39 +46,42 @@ func newBaseManifestFactory() *baseManifestFactory {
 	}
 }
 
-func (b *baseManifestFactory) mutatingWebhookConfiguration() *v1beta1.MutatingWebhookConfiguration {
+func (b *baseManifestFactory) mutatingWebhookConfiguration() *regv1.MutatingWebhookConfiguration {
 	path := "/mutate"
-	failurePolicy := v1beta1.Ignore
-	return &v1beta1.MutatingWebhookConfiguration{
+	failurePolicy := regv1.Ignore
+	sideEffects := regv1.SideEffectClassNone
+	return &regv1.MutatingWebhookConfiguration{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: v1beta1.SchemeGroupVersion.String(),
+			APIVersion: regv1.SchemeGroupVersion.String(),
 			Kind:       "MutatingWebhookConfiguration",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.mutatingWebhookConfigurationMeta.Name,
 			Namespace: b.mutatingWebhookConfigurationMeta.Namespace,
 		},
-		Webhooks: []v1beta1.MutatingWebhook{
+		Webhooks: []regv1.MutatingWebhook{
 			{
 				Name: "pod-identity-webhook.amazonaws.com",
-				ClientConfig: v1beta1.WebhookClientConfig{
-					Service: &v1beta1.ServiceReference{
+				ClientConfig: regv1.WebhookClientConfig{
+					Service: &regv1.ServiceReference{
 						Name:      b.serviceMeta.Name,
 						Namespace: b.serviceMeta.Namespace,
 						Path:      &path,
 					},
 				},
-				Rules: []v1beta1.RuleWithOperations{
+				Rules: []regv1.RuleWithOperations{
 					{
-						Operations: []v1beta1.OperationType{"CREATE"},
-						Rule: v1beta1.Rule{
+						Operations: []regv1.OperationType{"CREATE"},
+						Rule: regv1.Rule{
 							APIGroups:   []string{""},
 							APIVersions: []string{"v1"},
 							Resources:   []string{"pods"},
 						},
 					},
 				},
-				FailurePolicy: &failurePolicy,
+				FailurePolicy:           &failurePolicy,
+				SideEffects:             &sideEffects,
+				AdmissionReviewVersions: []string{"v1beta1"},
 			},
 		},
 	}

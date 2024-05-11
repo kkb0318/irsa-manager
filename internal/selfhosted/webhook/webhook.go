@@ -8,7 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type AwsWebhook struct {
+type WebhookSetup struct {
 	resources []client.Object
 }
 
@@ -19,13 +19,17 @@ func secretNamespacedName() types.NamespacedName {
 	}
 }
 
-func NewWebHook() (*AwsWebhook, error) {
+func (w *WebhookSetup) Resources() []client.Object {
+	return w.resources
+}
+
+func NewWebHookSetup() (*WebhookSetup, error) {
 	factory := newBaseManifestFactory()
 	resources, err := myCertificate(factory)
 	if err != nil {
 		return nil, err
 	}
-	return &AwsWebhook{resources}, nil
+	return &WebhookSetup{resources}, nil
 }
 
 func myCertificate(base *baseManifestFactory) ([]client.Object, error) {
