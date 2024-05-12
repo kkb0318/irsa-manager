@@ -62,8 +62,36 @@ var _ = Describe("IRSASetup Controller", func() {
 					},
 				},
 				f: func(r *IRSASetupReconciler, obj *irsav1alpha1.IRSASetup) {
-					expected := []types.NamespacedName{
-						{Name: "irsa-manager-key", Namespace: "kube-system"},
+					expected := []expectedResource{
+						{
+							NamespacedName: types.NamespacedName{Name: "irsa-manager-key", Namespace: "kube-system"},
+							f:              newSecret,
+						},
+						// webhook
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newDeployment,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newService,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newMutatingWebhookConfiguration,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newServiceAccount,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newClusterRole,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newClusterRoleBinding,
+						},
 					}
 
 					By("Reconciling the created resource")
@@ -81,7 +109,7 @@ var _ = Describe("IRSASetup Controller", func() {
 					})
 					Expect(err).NotTo(HaveOccurred())
 					for _, expect := range expected {
-						checkExist(expect, newSecret)
+						checkExist(expect)
 					}
 					By("removing the custom resource for the Kind")
 					Eventually(func() error {
@@ -92,12 +120,12 @@ var _ = Describe("IRSASetup Controller", func() {
 					})
 					Expect(err).To(Not(HaveOccurred()))
 					for _, expect := range expected {
-						checkNoExist(expect, newSecret)
+						checkNoExist(expect)
 					}
 				},
 			},
 			{
-				name: "case2",
+				name: "error case",
 				obj: &irsav1alpha1.IRSASetup{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-resource2",
@@ -114,8 +142,36 @@ var _ = Describe("IRSASetup Controller", func() {
 					},
 				},
 				f: func(r *IRSASetupReconciler, obj *irsav1alpha1.IRSASetup) {
-					expected := []types.NamespacedName{
-						{Name: "irsa-manager-key", Namespace: "kube-system"},
+					expected := []expectedResource{
+						{
+							NamespacedName: types.NamespacedName{Name: "irsa-manager-key", Namespace: "kube-system"},
+							f:              newSecret,
+						},
+						// webhook
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newDeployment,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newService,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newMutatingWebhookConfiguration,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newServiceAccount,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newClusterRole,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newClusterRoleBinding,
+						},
 					}
 					typeNamespacedName := types.NamespacedName{
 						Name:      obj.Name,
@@ -128,7 +184,7 @@ var _ = Describe("IRSASetup Controller", func() {
 					})
 					Expect(err).To(HaveOccurred())
 					for _, expect := range expected {
-						checkNoExist(expect, newSecret)
+						checkNoExist(expect)
 					}
 					By("successfully Reconciling")
 					r.AwsClient = newMockAwsClient(&mockAwsIamAPI{}, &mockAwsS3API{}, &mockAwsStsAPI{})
@@ -137,7 +193,7 @@ var _ = Describe("IRSASetup Controller", func() {
 					})
 					Expect(err).NotTo(HaveOccurred())
 					for _, expect := range expected {
-						checkExist(expect, newSecret)
+						checkExist(expect)
 					}
 					By("removing the custom resource for the Kind")
 					Eventually(func() error {
@@ -148,7 +204,7 @@ var _ = Describe("IRSASetup Controller", func() {
 					})
 					Expect(err).To(Not(HaveOccurred()))
 					for _, expect := range expected {
-						checkNoExist(expect, newSecret)
+						checkNoExist(expect)
 					}
 				},
 			},

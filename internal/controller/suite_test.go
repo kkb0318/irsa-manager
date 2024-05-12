@@ -26,7 +26,10 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	regv1 "k8s.io/api/admissionregistration/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -96,20 +99,49 @@ var _ = AfterSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 })
 
-func checkExist(expected types.NamespacedName, newFunc func() client.Object) {
+type expectedResource struct {
+	types.NamespacedName
+	f func() client.Object
+}
+
+func checkExist(resource expectedResource) {
 	Eventually(func() error {
-		found := newFunc()
-		return k8sClient.Get(ctx, expected, found)
+		found := resource.f()
+		return k8sClient.Get(ctx, resource.NamespacedName, found)
 	}, timeout).Should(Succeed())
 }
 
-func checkNoExist(expected types.NamespacedName, newFunc func() client.Object) {
+func checkNoExist(resource expectedResource) {
 	Eventually(func() error {
-		found := newFunc()
-		return k8sClient.Get(ctx, expected, found)
+		found := resource.f()
+		return k8sClient.Get(ctx, resource.NamespacedName, found)
 	}, timeout).Should(Not(Succeed()))
 }
 
 func newSecret() client.Object {
 	return &corev1.Secret{}
+}
+
+func newMutatingWebhookConfiguration() client.Object {
+	return &regv1.MutatingWebhookConfiguration{}
+}
+
+func newService() client.Object {
+	return &corev1.Service{}
+}
+
+func newDeployment() client.Object {
+	return &appsv1.Deployment{}
+}
+
+func newServiceAccount() client.Object {
+	return &corev1.ServiceAccount{}
+}
+
+func newClusterRole() client.Object {
+	return &rbacv1.ClusterRole{}
+}
+
+func newClusterRoleBinding() client.Object {
+	return &rbacv1.ClusterRoleBinding{}
 }

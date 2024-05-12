@@ -132,6 +132,13 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 	}
 	kubeHandler := handler.NewKubernetesHandler(kubeClient)
 	kubeHandler.Append(secret)
+	webhookSetup, err := webhook.NewWebHookSetup()
+	if err != nil {
+		return err
+	}
+	for _, r := range webhookSetup.Resources() {
+		kubeHandler.Append(r)
+	}
 	err = kubeHandler.DeleteAll(ctx)
 	if err != nil {
 		return err
