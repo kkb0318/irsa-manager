@@ -29,6 +29,11 @@ const (
 
 // IRSASetupSpec defines the desired state of IRSASetup
 type IRSASetupSpec struct {
+	// Cleanup, when enabled, allows the IRSASetup to perform garbage collection
+	// of resources that are no longer needed or managed.
+	// +required
+	Cleanup bool `json:"cleanup"`
+
 	// Mode specifies the mode of operation. Can be either "selfhosted" or "eks".
 	Mode string `json:"mode"`
 

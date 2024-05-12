@@ -10,14 +10,16 @@ import (
 )
 
 type KubernetesHandler struct {
-	client KubernetesClient
-	objs   []client.Object
+	client  KubernetesClient
+	objs    []client.Object
+	cleanup bool
 }
 
-func NewKubernetesHandler(c KubernetesClient) *KubernetesHandler {
+func NewKubernetesHandler(c KubernetesClient, cleanup bool) *KubernetesHandler {
 	return &KubernetesHandler{
-		client: c,
-		objs:   []client.Object{},
+		client:  c,
+		objs:    []client.Object{},
+		cleanup: cleanup,
 	}
 }
 

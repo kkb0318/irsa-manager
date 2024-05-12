@@ -77,6 +77,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `cleanup` _boolean_ | Cleanup, when enabled, allows the IRSASetup to perform garbage collection<br />of resources that are no longer needed or managed. |  |  |
 | `mode` _string_ | Mode specifies the mode of operation. Can be either "selfhosted" or "eks". |  |  |
 | `discovery` _[Discovery](#discovery)_ | Discovery configures the IdP Discovery process, essential for setting up IRSA by locating<br />the OIDC provider information. |  |  |
 | `auth` _[Auth](#auth)_ | Auth contains authentication configuration details. |  |  |

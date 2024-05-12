@@ -130,7 +130,7 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 	if err != nil {
 		return err
 	}
-	kubeHandler := handler.NewKubernetesHandler(kubeClient)
+	kubeHandler := handler.NewKubernetesHandler(kubeClient, obj.Spec.Cleanup)
 	kubeHandler.Append(secret)
 	webhookSetup, err := webhook.NewWebHookSetup()
 	if err != nil {
@@ -180,7 +180,7 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 	if err != nil {
 		return err
 	}
-	kubeHandler := handler.NewKubernetesHandler(kubeClient)
+	kubeHandler := handler.NewKubernetesHandler(kubeClient, obj.Spec.Cleanup)
 	kubeHandler.Append(secret)
 
 	// for webhook setup

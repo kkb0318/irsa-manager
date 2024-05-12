@@ -1,0 +1,12 @@
+apiVersion: irsa.kkb0318.github.io/v1alpha1
+kind: IRSASetup
+metadata:
+  name: irsa-init
+  namespace: irsa-manager-system
+spec:
+  cleanup: false
+  mode: selfhosted
+  discovery:
+    s3:
+      region: ap-northeast-1
+      bucketName: irsa-manager-test-kkb0010101
