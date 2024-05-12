@@ -48,6 +48,7 @@ type IRSASetupReconciler struct {
 //+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsasetups/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsasetups/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="apps",resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="rbac.authorization.k8s.io",resources=clusterroles,verbs=get;list;watch;create;update;patch;delete
@@ -122,6 +123,9 @@ func (r *IRSASetupReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.I
 }
 
 func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1alpha1.IRSASetup, kubeClient *kubernetes.KubernetesClient) error {
+	if !obj.Spec.Cleanup {
+		return nil
+	}
 	factory, err := newOIDCIdpFactory(ctx, obj, nil, r.AwsClient)
 	if err != nil {
 		return err
@@ -130,7 +134,7 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 	if err != nil {
 		return err
 	}
-	kubeHandler := handler.NewKubernetesHandler(kubeClient, obj.Spec.Cleanup)
+	kubeHandler := handler.NewKubernetesHandler(kubeClient)
 	kubeHandler.Append(secret)
 	webhookSetup, err := webhook.NewWebHookSetup()
 	if err != nil {
@@ -180,7 +184,7 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 	if err != nil {
 		return err
 	}
-	kubeHandler := handler.NewKubernetesHandler(kubeClient, obj.Spec.Cleanup)
+	kubeHandler := handler.NewKubernetesHandler(kubeClient)
 	kubeHandler.Append(secret)
 
 	// for webhook setup

@@ -210,6 +210,84 @@ var _ = Describe("IRSASetup Controller", func() {
 					}
 				},
 			},
+			{
+				name: "no cleanup",
+				obj: &irsav1alpha1.IRSASetup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-resource2",
+						Namespace: "default",
+					},
+					Spec: irsav1alpha1.IRSASetupSpec{
+						Cleanup: false,
+						Mode:    "selfhoted",
+						Discovery: irsav1alpha1.Discovery{
+							S3: irsav1alpha1.S3Discovery{
+								Region:     "ap-northeast-1",
+								BucketName: "irsa-manager-kkb-1",
+							},
+						},
+					},
+				},
+				f: func(r *IRSASetupReconciler, obj *irsav1alpha1.IRSASetup) {
+					expected := []expectedResource{
+						{
+							NamespacedName: types.NamespacedName{Name: "irsa-manager-key", Namespace: "kube-system"},
+							f:              newSecret,
+						},
+						// webhook
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newDeployment,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newService,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newMutatingWebhookConfiguration,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newServiceAccount,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newClusterRole,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "pod-identity-webhook", Namespace: "kube-system"},
+							f:              newClusterRoleBinding,
+						},
+					}
+					typeNamespacedName := types.NamespacedName{
+						Name:      obj.Name,
+						Namespace: obj.Namespace,
+					}
+					_, err := r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).NotTo(HaveOccurred())
+					_, err = r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).NotTo(HaveOccurred())
+					for _, expect := range expected {
+						checkExist(expect)
+					}
+					By("removing the custom resource (not cleanup)")
+					Eventually(func() error {
+						return k8sClient.Delete(ctx, obj)
+					}, timeout).Should(Succeed())
+					_, err = r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).To(Not(HaveOccurred()))
+					for _, expect := range expected {
+						checkExist(expect)
+					}
+				},
+			},
 		}
 		for _, tt := range tests {
 			It(tt.name, func() {
@@ -225,22 +303,7 @@ var _ = Describe("IRSASetup Controller", func() {
 				By("creating the custom resource for the Kind IRSASetup")
 				err := k8sClient.Get(ctx, typeNamespacedName, tt.obj)
 				if err != nil && errors.IsNotFound(err) {
-					resource := &irsav1alpha1.IRSASetup{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      typeNamespacedName.Name,
-							Namespace: typeNamespacedName.Namespace,
-						},
-						Spec: irsav1alpha1.IRSASetupSpec{
-							Mode: "selfhoted",
-							Discovery: irsav1alpha1.Discovery{
-								S3: irsav1alpha1.S3Discovery{
-									Region:     "ap-northeast-1",
-									BucketName: "irsa-manager-kkb-1",
-								},
-							},
-						},
-					}
-					Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+					Expect(k8sClient.Create(ctx, tt.obj)).To(Succeed())
 				}
 				_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
 					NamespacedName: typeNamespacedName,
