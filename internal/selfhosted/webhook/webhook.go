@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kkb0318/irsa-manager/internal/manifests"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -49,13 +50,23 @@ func myCertificate(base *baseManifestFactory) ([]client.Object, error) {
 	deploy := base.deployment()
 	deploy.Spec.Template.Spec.Containers[0].Command = []string{
 		"/webhook",
-		"--in-cluster",
+		"--in-cluster=false",
 		fmt.Sprintf("--namespace=%s", WEBHOOK_NAMESPACE),
 		fmt.Sprintf("--service-name=%s", base.serviceMeta.Name),
 		fmt.Sprintf("--tls-secret=%s", secretNamespacedName.Name),
 		"--annotation-prefix=eks.amazonaws.com",
 		"--token-audience=sts.amazonaws.com",
 		"--logtostderr",
+	}
+	deploy.Spec.Template.Spec.Volumes = []corev1.Volume{
+		{
+			Name: "cert",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: secretNamespacedName.Name,
+				},
+			},
+		},
 	}
 	mutate := base.mutatingWebhookConfiguration()
 	mutate.Webhooks[0].ClientConfig.CABundle = []byte(tlsCredential.CaBundle())

@@ -28,9 +28,6 @@ spec:
           # - --token-audience=sts.amazonaws.com
           # - --logtostderr
           volumeMounts:
-            - name: webhook-certs
-              mountPath: /var/run/app/certs
-              readOnly: false
-      volumes:
-        - name: webhook-certs
-          emptyDir: {}
+            - name: cert
+              mountPath: /etc/webhook/certs
+              readOnly: true

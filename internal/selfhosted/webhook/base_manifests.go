@@ -117,21 +117,18 @@ func (b *baseManifestFactory) deployment() *appsv1.Deployment {
 							// Command:         []string{}, // Command must be patched
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name:      "webhook-certs",
-									MountPath: "/var/run/app/certs",
-									ReadOnly:  false,
+									Name:      "cert",
+									MountPath: "/etc/webhook/certs",
+									ReadOnly:  true,
 								},
 							},
 						},
 					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "webhook-certs",
-							VolumeSource: corev1.VolumeSource{
-								EmptyDir: &corev1.EmptyDirVolumeSource{},
-							},
-						},
-					},
+					// Volumes: []corev1.Volume{ //Volumes must be patched
+					// 	{
+					// 		Name: "cert",
+					// 	},
+					// },
 				},
 			},
 		},
