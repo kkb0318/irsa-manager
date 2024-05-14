@@ -69,7 +69,7 @@ func myCertificate(base *baseManifestFactory) ([]client.Object, error) {
 		},
 	}
 	mutate := base.mutatingWebhookConfiguration()
-	mutate.Webhooks[0].ClientConfig.CABundle = []byte(tlsCredential.CaBundle())
+	mutate.Webhooks[0].ClientConfig.CABundle = tlsCredential.Certificate()
 	resources = append(resources,
 		secret,
 		deploy,

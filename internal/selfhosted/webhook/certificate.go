@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/base64"
 	"encoding/pem"
 	"math/big"
 	"time"
@@ -16,10 +15,6 @@ import (
 type TlsCredential struct {
 	privateKey  []byte
 	certificate []byte
-}
-
-func (t TlsCredential) CaBundle() string {
-	return base64.StdEncoding.EncodeToString(t.certificate)
 }
 
 func (t TlsCredential) Certificate() []byte {
@@ -51,6 +46,12 @@ func CreateTlsCredential(serviceNamespacedName types.NamespacedName) (TlsCredent
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 		IsCA:                  true,
+	}
+
+	// Add SANs to the certificate template
+	template.DNSNames = []string{
+		serviceNamespacedName.Name + "." + serviceNamespacedName.Namespace + ".svc",
+		serviceNamespacedName.Name + "." + serviceNamespacedName.Namespace + ".svc.cluster.local",
 	}
 
 	// Create the certificate
