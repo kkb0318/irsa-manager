@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -152,7 +153,9 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 	if err != nil {
 		return err
 	}
-	controllerutil.RemoveFinalizer(obj, irsamanagerFinalizer)
+	if !controllerutil.RemoveFinalizer(obj, irsamanagerFinalizer) {
+		return errors.New("failed to remove finalizer")
+	}
 	return r.Update(ctx, obj)
 }
 
@@ -185,16 +188,13 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 	if err != nil {
 		return err
 	}
-	kubeHandler := handler.NewKubernetesHandler(kubeClient)
-	kubeHandler.Append(secret)
+	kubeHandlerForOidc := handler.NewKubernetesHandler(kubeClient)
+	kubeHandlerForOidc.Append(secret)
 
 	// for webhook setup
 	webhookSetup, err := webhook.NewWebHookSetup()
 	if err != nil {
 		return err
-	}
-	for _, r := range webhookSetup.Resources() {
-		kubeHandler.Append(r)
 	}
 
 	var e error
@@ -217,13 +217,24 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 		return err
 	}
 	if forceUpdate {
-		err = kubeHandler.ApplyAll(ctx)
+		err = kubeHandlerForOidc.ApplyAll(ctx)
 	} else {
-		err = kubeHandler.CreateAll(ctx)
+		err = kubeHandlerForOidc.CreateAll(ctx)
 	}
 	if err != nil {
 		e = err
 		reason = irsav1alpha1.SelfHostedReasonFailedKeys
+		return err
+	}
+	// for webhook update
+	kubeHandlerForWebhook := handler.NewKubernetesHandler(kubeClient)
+	for _, r := range webhookSetup.Resources() {
+		kubeHandlerForWebhook.Append(r)
+	}
+	err = kubeHandlerForWebhook.ApplyAll(ctx)
+	if err != nil {
+		e = err
+		reason = irsav1alpha1.SelfHostedReasonFailedWebhook
 		return err
 	}
 	*obj = irsav1alpha1.SetupSelfHostedStatusReady(*obj, string(irsav1alpha1.SelfHostedReasonReady), "successfully setup resources for self-hosted")

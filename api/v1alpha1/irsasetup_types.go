@@ -136,9 +136,10 @@ func IsSelfHostedReadyConditionTrue(irsa IRSASetup) bool {
 type SelfHostedReason string
 
 const (
-	SelfHostedReasonFailedOidc SelfHostedReason = "SelfHostedSetupFailedOidcCreation"
-	SelfHostedReasonFailedKeys SelfHostedReason = "SelfHostedSetupFailedKeysCreation"
-	SelfHostedReasonReady      SelfHostedReason = "SelfHostedSetupReady"
+	SelfHostedReasonFailedWebhook SelfHostedReason = "SelfHostedSetupFailedWebhookCreation"
+	SelfHostedReasonFailedOidc    SelfHostedReason = "SelfHostedSetupFailedOidcCreation"
+	SelfHostedReasonFailedKeys    SelfHostedReason = "SelfHostedSetupFailedKeysCreation"
+	SelfHostedReasonReady         SelfHostedReason = "SelfHostedSetupReady"
 )
 
 //+kubebuilder:object:root=true
