@@ -26,7 +26,7 @@ import (
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	irsav1alpha1 "github.com/kkb0318/irsa-manager/api/v1alpha1"
-	awsclient "github.com/kkb0318/irsa-manager/internal/client"
+	awsclient "github.com/kkb0318/irsa-manager/internal/aws"
 	"github.com/kkb0318/irsa-manager/internal/handler"
 	"github.com/kkb0318/irsa-manager/internal/kubernetes"
 	"github.com/kkb0318/irsa-manager/internal/manifests"

@@ -3,7 +3,7 @@ package oidc
 import (
 	"context"
 
-	awsclient "github.com/kkb0318/irsa-manager/internal/client"
+	awsclient "github.com/kkb0318/irsa-manager/internal/aws"
 	"github.com/kkb0318/irsa-manager/internal/selfhosted"
 )
 

@@ -31,7 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	awsclient "github.com/kkb0318/irsa-manager/internal/client"
+	awsclient "github.com/kkb0318/irsa-manager/internal/aws"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	irsav1alpha1 "github.com/kkb0318/irsa-manager/api/v1alpha1"

@@ -3,17 +3,17 @@ package oidc
 import (
 	"context"
 
-	"github.com/kkb0318/irsa-manager/internal/client"
+	awsclient "github.com/kkb0318/irsa-manager/internal/aws"
 	"github.com/kkb0318/irsa-manager/internal/selfhosted"
 )
 
 type AwsIdP struct {
-	iamClient  *client.AwsIamClient
-	stsClient  *client.AwsStsClient
+	iamClient  *awsclient.AwsIamClient
+	stsClient  *awsclient.AwsStsClient
 	issuerMeta selfhosted.OIDCIssuerMeta
 }
 
-func NewAwsIdP(awsConfig client.AwsClient, issuerMeta selfhosted.OIDCIssuerMeta) (*AwsIdP, error) {
+func NewAwsIdP(awsConfig awsclient.AwsClient, issuerMeta selfhosted.OIDCIssuerMeta) (*AwsIdP, error) {
 	iamClient := awsConfig.IamClient()
 	stsClient := awsConfig.StsClient()
 	return &AwsIdP{iamClient, stsClient, issuerMeta}, nil

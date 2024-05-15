@@ -4,19 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kkb0318/irsa-manager/internal/client"
+	awsclient "github.com/kkb0318/irsa-manager/internal/aws"
 	"github.com/kkb0318/irsa-manager/internal/selfhosted"
 )
 
 const CONFIGURATION_PATH = ".well-known/openid-configuration"
 
 type S3IdPDiscovery struct {
-	s3Client *client.AwsS3Client
+	s3Client *awsclient.AwsS3Client
 }
 
 // NewS3IdPDiscovery initializes a new instance of S3IdPCreator with the specified AWS region and bucket name.
 // This function attempts to create an AWS client configured for the specified region.
-func NewS3IdPDiscovery(awsConfig client.AwsClient, region, bucketName string) *S3IdPDiscovery {
+func NewS3IdPDiscovery(awsConfig awsclient.AwsClient, region, bucketName string) *S3IdPDiscovery {
 	s3Client := awsConfig.S3Client(region, bucketName)
 	return &S3IdPDiscovery{s3Client}
 }
@@ -41,7 +41,7 @@ func (s *S3IdPDiscovery) Upload(ctx context.Context, o selfhosted.OIDCIdPDiscove
 	if err != nil {
 		return nil
 	}
-	inputs := []client.ObjectInput{
+	inputs := []awsclient.ObjectInput{
 		{
 			Key:  CONFIGURATION_PATH,
 			Body: discovery,
