@@ -20,4 +20,13 @@ resources:
   kind: IRSASetup
   path: github.com/kkb0318/irsa-manager/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kkb0318.github.io
+  group: irsa
+  kind: IRSA
+  path: github.com/kkb0318/irsa-manager/api/v1alpha1
+  version: v1alpha1
 version: "3"

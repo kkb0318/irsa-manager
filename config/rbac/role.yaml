@@ -79,6 +79,32 @@ rules:
 - apiGroups:
   - irsa.kkb0318.github.io
   resources:
+  - irsas
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - irsa.kkb0318.github.io
+  resources:
+  - irsas/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - irsa.kkb0318.github.io
+  resources:
+  - irsas/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - irsa.kkb0318.github.io
+  resources:
   - irsasetups
   verbs:
   - create

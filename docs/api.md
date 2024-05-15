@@ -9,6 +9,7 @@
 Package v1alpha1 contains API Schema definitions for the irsa v1alpha1 API group
 
 ### Resource Types
+- [IRSA](#irsa)
 - [IRSASetup](#irsasetup)
 
 
@@ -46,6 +47,41 @@ _Appears in:_
 | `s3` _[S3Discovery](#s3discovery)_ | S3 specifies the AWS S3 bucket details where the OIDC provider's discovery information is hosted. |  |  |
 
 
+#### IRSA
+
+
+
+IRSA is the Schema for the irsas API
+
+
+
+
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `irsa.kkb0318.github.io/v1alpha1` | | |
+| `kind` _string_ | `IRSA` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[IRSASpec](#irsaspec)_ |  |  |  |
+
+
+#### IRSAServiceAccount
+
+
+
+IRSAServiceAccount represents the details of the Kubernetes service account
+
+
+
+_Appears in:_
+- [IRSASpec](#irsaspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | Name represents the name of the Kubernetes service account |  |  |
+| `namespaces` _string array_ | Namespaces represents the list of namespaces where the service account is used |  |  |
+
+
 #### IRSASetup
 
 
@@ -60,7 +96,7 @@ IRSASetup represents a configuration for setting up IAM Roles for Service Accoun
 | --- | --- | --- | --- |
 | `apiVersion` _string_ | `irsa.kkb0318.github.io/v1alpha1` | | |
 | `kind` _string_ | `IRSASetup` | | |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
 | `spec` _[IRSASetupSpec](#irsasetupspec)_ |  |  |  |
 
 
@@ -83,6 +119,43 @@ _Appears in:_
 | `auth` _[Auth](#auth)_ | Auth contains authentication configuration details. |  |  |
 
 
+
+
+#### IRSASpec
+
+
+
+IRSASpec defines the desired state of IRSA
+
+
+
+_Appears in:_
+- [IRSA](#irsa)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `serviceAccount` _[IRSAServiceAccount](#irsaserviceaccount)_ | ServiceAccount represents the Kubernetes service account associated with the IRSA |  |  |
+| `iamRole` _[IamRole](#iamrole)_ | IamRole represents the IAM role details associated with the IRSA |  |  |
+| `iamPolicies` _string array_ | IamPolicies represents the list of IAM policies to be attached to the IAM role |  |  |
+
+
+
+
+#### IamRole
+
+
+
+IamRole represents the IAM role configuration
+
+
+
+_Appears in:_
+- [IRSASpec](#irsaspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `create` _boolean_ | Create specifies whether to create the IAM role or not |  |  |
+| `name` _string_ | Name represents the name of the IAM role |  |  |
 
 
 #### S3Discovery
