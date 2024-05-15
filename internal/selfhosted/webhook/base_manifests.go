@@ -111,9 +111,8 @@ func (b *baseManifestFactory) deployment() *appsv1.Deployment {
 					ServiceAccountName: b.serviceAccountMeta.Name,
 					Containers: []corev1.Container{
 						{
-							Name:  "pod-identity-webhook",
-							Image: "amazon/amazon-eks-pod-identity-webhook:latest",
-
+							Name:            "pod-identity-webhook",
+							Image:           "amazon/amazon-eks-pod-identity-webhook:latest",
 							ImagePullPolicy: corev1.PullAlways,
 							// Command:         []string{}, // Command must be patched
 							VolumeMounts: []corev1.VolumeMount{

@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"errors"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -105,6 +104,11 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	if !obj.DeletionTimestamp.IsZero() {
 		err = r.reconcileDelete(ctx, obj, kubeClient)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		controllerutil.RemoveFinalizer(obj, irsamanagerFinalizer)
+		err = r.Update(ctx, obj)
 		if err == nil {
 			log.Info("successfully deleted")
 		}
@@ -149,14 +153,7 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 	if err != nil {
 		return err
 	}
-	err = selfhosted.Delete(ctx, factory)
-	if err != nil {
-		return err
-	}
-	if !controllerutil.RemoveFinalizer(obj, irsamanagerFinalizer) {
-		return errors.New("failed to remove finalizer")
-	}
-	return r.Update(ctx, obj)
+	return selfhosted.Delete(ctx, factory)
 }
 
 // reconcileSelfhosted ensures that the self-hosted resources are set up correctly.
