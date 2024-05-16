@@ -49,8 +49,7 @@ type IRSAReconciler struct {
 func (r *IRSAReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	// TODO(user): your logic here
-
+	// roleArn: arn:aws:iam::{accountId}:role/{roleName}
 	return ctrl.Result{}, nil
 }
 

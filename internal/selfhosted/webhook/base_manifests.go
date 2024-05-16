@@ -1,6 +1,7 @@
 package webhook
 
 import (
+	"github.com/kkb0318/irsa-manager/internal/manifests"
 	regv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -136,16 +137,7 @@ func (b *baseManifestFactory) deployment() *appsv1.Deployment {
 }
 
 func (b *baseManifestFactory) serviceAccount() *corev1.ServiceAccount {
-	return &corev1.ServiceAccount{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: corev1.SchemeGroupVersion.String(),
-			Kind:       "ServiceAccount",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.serviceAccountMeta.Name,
-			Namespace: b.serviceAccountMeta.Namespace,
-		},
-	}
+	return manifests.NewServiceAccountBuilder().Build(b.serviceAccountMeta)
 }
 
 func (b *baseManifestFactory) clusterRole() *rbacv1.ClusterRole {
