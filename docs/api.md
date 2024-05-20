@@ -154,7 +154,6 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `create` _boolean_ | Create specifies whether to create the IAM role or not |  |  |
 | `name` _string_ | Name represents the name of the IAM role |  |  |
 
 

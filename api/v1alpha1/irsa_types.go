@@ -20,9 +20,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // IRSASpec defines the desired state of IRSA
 type IRSASpec struct {
 	// ServiceAccount represents the Kubernetes service account associated with the IRSA
@@ -43,8 +40,6 @@ type IRSAServiceAccount struct {
 
 // IamRole represents the IAM role configuration
 type IamRole struct {
-	// Create specifies whether to create the IAM role or not
-	Create bool `json:"create,omitempty"`
 	// Name represents the name of the IAM role
 	Name string `json:"name,omitempty"`
 }

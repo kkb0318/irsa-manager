@@ -371,6 +371,26 @@ func (m *mockAwsIamAPI) DeleteOpenIDConnectProvider(ctx context.Context, params 
 	return &iam.DeleteOpenIDConnectProviderOutput{}, nil
 }
 
+func (m *mockAwsIamAPI) CreateRole(ctx context.Context, params *iam.CreateRoleInput, optFns ...func(*iam.Options)) (*iam.CreateRoleOutput, error) {
+	return nil, nil
+}
+
+func (m *mockAwsIamAPI) UpdateAssumeRolePolicy(ctx context.Context, params *iam.UpdateAssumeRolePolicyInput, optFns ...func(*iam.Options)) (*iam.UpdateAssumeRolePolicyOutput, error) {
+	return nil, nil
+}
+
+func (m *mockAwsIamAPI) AttachRolePolicy(ctx context.Context, params *iam.AttachRolePolicyInput, optFns ...func(*iam.Options)) (*iam.AttachRolePolicyOutput, error) {
+	return nil, nil
+}
+
+func (m *mockAwsIamAPI) DeleteRole(ctx context.Context, params *iam.DeleteRoleInput, optFns ...func(*iam.Options)) (*iam.DeleteRoleOutput, error) {
+	return nil, nil
+}
+
+func (m *mockAwsIamAPI) DetachRolePolicy(ctx context.Context, params *iam.DetachRolePolicyInput, optFns ...func(*iam.Options)) (*iam.DetachRolePolicyOutput, error) {
+	return nil, nil
+}
+
 func (m *mockAwsStsAPI) GetCallerIdentity(ctx context.Context, params *sts.GetCallerIdentityInput, optFns ...func(*sts.Options)) (*sts.GetCallerIdentityOutput, error) {
 	return &sts.GetCallerIdentityOutput{Account: aws.String("123456789012")}, nil
 }

@@ -65,7 +65,7 @@ GOLANGCI_LINT_VERSION ?= v1.57.2
 
 
 .PHONY: all
-all: fmt vet lint generate manifests kustomize helmify generate-docs mock
+all: fmt vet lint generate manifests kustomize helmify generate-docs 
 
 
 ##@ Development
@@ -222,4 +222,10 @@ else
 OPERATOR_SDK = $(shell which operator-sdk)
 endif
 endif
+
+.PHONY: test-deploy
+test-deploy: build install
+	docker build . -t ghcr.io/kkb0318/irsa-manager
+	docker push ghcr.io/kkb0318/irsa-manager:latest
+
 

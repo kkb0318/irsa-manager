@@ -49,10 +49,6 @@ spec:
                 description: IamRole represents the IAM role details associated with
                   the IRSA
                 properties:
-                  create:
-                    description: Create specifies whether to create the IAM role or
-                      not
-                    type: boolean
                   name:
                     description: Name represents the name of the IAM role
                     type: string
