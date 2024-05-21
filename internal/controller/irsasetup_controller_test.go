@@ -180,7 +180,7 @@ var _ = Describe("IRSASetup Controller", func() {
 						Namespace: obj.Namespace,
 					}
 					By("secret does not exist when reconciling with the AwsClient error")
-					r.AwsClient = newMockAwsClient(&mockAwsIamAPI{createOidcErr: true}, &mockAwsS3API{}, &mockAwsStsAPI{})
+					r.AwsClient = newMockAwsClient(&mockAwsIamAPI{createOidcErr: fmt.Errorf("createOidcErr")}, &mockAwsS3API{}, &mockAwsStsAPI{})
 					_, err := r.Reconcile(ctx, reconcile.Request{
 						NamespacedName: typeNamespacedName,
 					})
@@ -347,8 +347,13 @@ func (m *mockAwsClient) StsClient() *awsclient.AwsStsClient {
 
 type (
 	mockAwsIamAPI struct {
-		createOidcErr bool
-		deleteOidcErr bool
+		createOidcErr               error
+		deleteOidcErr               error
+		createRoleErr               error
+		deleteRoleErr               error
+		updateAssumeRolePolicyError error
+		attachRolePolicyError       error
+		detachRolePolicyError       error
 	}
 	mockAwsS3API struct {
 		createBucketErr bool
@@ -358,37 +363,31 @@ type (
 )
 
 func (m *mockAwsIamAPI) CreateOpenIDConnectProvider(ctx context.Context, params *iam.CreateOpenIDConnectProviderInput, optFns ...func(*iam.Options)) (*iam.CreateOpenIDConnectProviderOutput, error) {
-	if m.createOidcErr {
-		return nil, fmt.Errorf("create Oidc error")
-	}
-	return &iam.CreateOpenIDConnectProviderOutput{OpenIDConnectProviderArn: aws.String("arn::mock")}, nil
+	return &iam.CreateOpenIDConnectProviderOutput{OpenIDConnectProviderArn: aws.String("arn::mock")}, m.createOidcErr
 }
 
 func (m *mockAwsIamAPI) DeleteOpenIDConnectProvider(ctx context.Context, params *iam.DeleteOpenIDConnectProviderInput, optFns ...func(*iam.Options)) (*iam.DeleteOpenIDConnectProviderOutput, error) {
-	if m.deleteOidcErr {
-		return nil, fmt.Errorf("delete Oidc error")
-	}
-	return &iam.DeleteOpenIDConnectProviderOutput{}, nil
+	return &iam.DeleteOpenIDConnectProviderOutput{}, m.deleteOidcErr
 }
 
 func (m *mockAwsIamAPI) CreateRole(ctx context.Context, params *iam.CreateRoleInput, optFns ...func(*iam.Options)) (*iam.CreateRoleOutput, error) {
-	return nil, nil
+	return nil, m.createRoleErr
 }
 
 func (m *mockAwsIamAPI) UpdateAssumeRolePolicy(ctx context.Context, params *iam.UpdateAssumeRolePolicyInput, optFns ...func(*iam.Options)) (*iam.UpdateAssumeRolePolicyOutput, error) {
-	return nil, nil
+	return nil, m.updateAssumeRolePolicyError
 }
 
 func (m *mockAwsIamAPI) AttachRolePolicy(ctx context.Context, params *iam.AttachRolePolicyInput, optFns ...func(*iam.Options)) (*iam.AttachRolePolicyOutput, error) {
-	return nil, nil
+	return nil, m.attachRolePolicyError
 }
 
 func (m *mockAwsIamAPI) DeleteRole(ctx context.Context, params *iam.DeleteRoleInput, optFns ...func(*iam.Options)) (*iam.DeleteRoleOutput, error) {
-	return nil, nil
+	return nil, m.deleteRoleErr
 }
 
 func (m *mockAwsIamAPI) DetachRolePolicy(ctx context.Context, params *iam.DetachRolePolicyInput, optFns ...func(*iam.Options)) (*iam.DetachRolePolicyOutput, error) {
-	return nil, nil
+	return nil, m.detachRolePolicyError
 }
 
 func (m *mockAwsStsAPI) GetCallerIdentity(ctx context.Context, params *sts.GetCallerIdentityInput, optFns ...func(*sts.Options)) (*sts.GetCallerIdentityOutput, error) {

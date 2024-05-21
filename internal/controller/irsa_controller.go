@@ -19,10 +19,16 @@ package controller
 import (
 	"context"
 
+	awsclient "github.com/kkb0318/irsa-manager/internal/aws"
+	"github.com/kkb0318/irsa-manager/internal/handler"
+	"github.com/kkb0318/irsa-manager/internal/kubernetes"
+	"github.com/kkb0318/irsa-manager/internal/manifests"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	irsav1alpha1 "github.com/kkb0318/irsa-manager/api/v1alpha1"
 )
@@ -30,7 +36,8 @@ import (
 // IRSAReconciler reconciles a IRSA object
 type IRSAReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme    *runtime.Scheme
+	AwsClient awsclient.AwsClient
 }
 
 //+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsas,verbs=get;list;watch;create;update;patch;delete
@@ -47,10 +54,104 @@ type IRSAReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.3/pkg/reconcile
 func (r *IRSAReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	log := ctrllog.FromContext(ctx)
+	obj := &irsav1alpha1.IRSA{}
+	if err := r.Get(ctx, req.NamespacedName, obj); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+	if r.AwsClient == nil {
+		awsClient, err := awsclient.NewAwsClientFactory(ctx)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		r.AwsClient = awsClient
+	}
+	kubeClient, err := kubernetes.NewKubernetesClient(r.Client, kubernetes.Owner{Field: "irsa-manager"})
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if !controllerutil.ContainsFinalizer(obj, irsamanagerFinalizer) {
+		controllerutil.AddFinalizer(obj, irsamanagerFinalizer)
+		if err := r.Update(ctx, obj); err != nil {
+			log.Error(err, "Failed to update custom resource to add finalizer")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	defer func() {
+		if err := r.Get(ctx, req.NamespacedName, &irsav1alpha1.IRSA{}); err != nil {
+			return
+		}
+		statusHandler := handler.NewStatusHandler(kubeClient)
+		if err := statusHandler.Patch(ctx, obj); err != nil {
+			return
+		}
+	}()
+
+	if !obj.DeletionTimestamp.IsZero() {
+		err = r.reconcileDelete(ctx, obj, kubeClient)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		controllerutil.RemoveFinalizer(obj, irsamanagerFinalizer)
+		err = r.Update(ctx, obj)
+		if err == nil {
+			log.Info("successfully deleted")
+		}
+		return ctrl.Result{}, err
+	}
+
+	if err := r.reconcile(ctx, obj, kubeClient); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	// roleArn: arn:aws:iam::{accountId}:role/{roleName}
+	log.Info("successfully reconciled")
 	return ctrl.Result{}, nil
+}
+
+func (r *IRSAReconciler) reconcileDelete(ctx context.Context, obj *irsav1alpha1.IRSA, kubeClient *kubernetes.KubernetesClient) error {
+	if !obj.Spec.Cleanup {
+		return nil
+	}
+	return nil
+	// kubeHandler := handler.NewKubernetesHandler(kubeClient)
+	// kubeHandler.Append(secret)
+	//  err := kubeHandler.DeleteAll(ctx)
+	// if err != nil {
+	// 	return err
+	// }
+	// return selfhosted.Delete(ctx, factory)
+}
+
+func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, kubeClient *kubernetes.KubernetesClient) error {
+	serviceAccount := obj.Spec.ServiceAccount
+	accountId, err := r.AwsClient.StsClient().GetAccountId()
+	if err != nil {
+		return err
+	}
+	roleManager := awsclient.RoleManager{
+		RoleName:   obj.Spec.IamRole.Name,
+		Namespaces: serviceAccount.Namespaces,
+		Policies:   obj.Spec.IamPolicies,
+		AccountId:  accountId,
+	}
+	err = r.AwsClient.IamClient().CreateIRSARole(ctx, "", roleManager)
+	if err != nil {
+		return err
+	}
+	kubeHandler := handler.NewKubernetesHandler(kubeClient)
+
+	for _, ns := range serviceAccount.Namespaces {
+		sa := manifests.NewServiceAccountBuilder().WithIRSAAnnotation(roleManager).Build(types.NamespacedName{
+			Name:      serviceAccount.Name,
+			Namespace: ns,
+		})
+		kubeHandler.Append(sa)
+
+	}
+	return kubeHandler.ApplyAll(ctx)
 }
 
 // SetupWithManager sets up the controller with the Manager.

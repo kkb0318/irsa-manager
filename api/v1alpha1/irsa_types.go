@@ -22,6 +22,10 @@ import (
 
 // IRSASpec defines the desired state of IRSA
 type IRSASpec struct {
+	// Cleanup, when enabled, allows the IRSA to perform garbage collection
+	// of resources that are no longer needed or managed.
+	// +required
+	Cleanup bool `json:"cleanup"`
 	// ServiceAccount represents the Kubernetes service account associated with the IRSA
 	ServiceAccount IRSAServiceAccount `json:"serviceAccount,omitempty"`
 	// IamRole represents the IAM role details associated with the IRSA

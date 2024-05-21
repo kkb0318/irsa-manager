@@ -22,6 +22,9 @@ type RoleManager struct {
 	Namespaces []string
 	// Policies represents the list of policies to be attached to the role
 	Policies []string
+
+	// AccountId represents the AWS Account Id
+	AccountId string
 }
 
 func (r *RoleManager) PolicyArn(policy string) *string {
@@ -58,8 +61,8 @@ func (a *AwsIamClient) DeleteIRSARole(ctx context.Context, r RoleManager) error 
 }
 
 // CreateIRSARole creates an IAM role with the specified trust policy and attaches specified policies to it
-func (a *AwsIamClient) CreateIRSARole(ctx context.Context, accountId, issuerHostPath string, r RoleManager) error {
-	providerArn := fmt.Sprintf("arn:aws:iam::%s:oidc-provider/%s", accountId, issuerHostPath)
+func (a *AwsIamClient) CreateIRSARole(ctx context.Context, issuerHostPath string, r RoleManager) error {
+	providerArn := fmt.Sprintf("arn:aws:iam::%s:oidc-provider/%s", r.AccountId, issuerHostPath)
 	statement := make([]map[string]interface{}, len(r.Namespaces))
 	for i, ns := range r.Namespaces {
 		statement[i] = map[string]interface{}{

@@ -17,7 +17,7 @@ limitations under the License.
 package controller
 
 import (
-	"context"
+	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -31,54 +31,165 @@ import (
 )
 
 var _ = Describe("IRSA Controller", func() {
-	Context("When reconciling a resource", func() {
-		const resourceName = "test-resource"
-
-		ctx := context.Background()
-
-		typeNamespacedName := types.NamespacedName{
-			Name:      resourceName,
-			Namespace: "default", // TODO(user):Modify as needed
-		}
-		irsa := &irsav1alpha1.IRSA{}
-
-		BeforeEach(func() {
-			By("creating the custom resource for the Kind IRSA")
-			err := k8sClient.Get(ctx, typeNamespacedName, irsa)
-			if err != nil && errors.IsNotFound(err) {
-				resource := &irsav1alpha1.IRSA{
+	Context("When reconciling IRSA", func() {
+		tests := []struct {
+			name string
+			objs *irsav1alpha1.IRSA
+			f    func(*IRSAReconciler, *irsav1alpha1.IRSA)
+		}{
+			{
+				name: "should reconcile successfully",
+				objs: &irsav1alpha1.IRSA{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
+						Name:      "test-resource1",
 						Namespace: "default",
 					},
-					// TODO(user): Specify other spec details if needed.
+					Spec: irsav1alpha1.IRSASpec{
+						ServiceAccount: irsav1alpha1.IRSAServiceAccount{
+							Name: "sa-1",
+							Namespaces: []string{
+								"kube-system",
+								"default",
+							},
+						},
+					},
+				},
+				f: func(r *IRSAReconciler, obj *irsav1alpha1.IRSA) {
+					expected := []expectedResource{
+						{
+							NamespacedName: types.NamespacedName{Name: "sa-1", Namespace: "kube-system"},
+							f:              newServiceAccount,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "sa-1", Namespace: "default"},
+							f:              newServiceAccount,
+						},
+					}
+
+					By("Reconciling the created resource")
+					typeNamespacedName := types.NamespacedName{
+						Name:      obj.Name,
+						Namespace: obj.Namespace,
+					}
+
+					_, err := r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).NotTo(HaveOccurred())
+					_, err = r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).NotTo(HaveOccurred())
+					for _, expect := range expected {
+						checkExist(expect)
+					}
+					By("removing the custom resource for the Kind")
+					Eventually(func() error {
+						return k8sClient.Delete(ctx, obj)
+					}, timeout).Should(Succeed())
+					_, err = r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).To(Not(HaveOccurred()))
+					for _, expect := range expected {
+						checkNoExist(expect)
+					}
+				},
+			},
+			{
+				name: "error",
+				objs: &irsav1alpha1.IRSA{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-resource2",
+						Namespace: "default",
+					},
+					Spec: irsav1alpha1.IRSASpec{
+						ServiceAccount: irsav1alpha1.IRSAServiceAccount{
+							Name: "sa-2",
+							Namespaces: []string{
+								"kube-system",
+								"default",
+							},
+						},
+					},
+				},
+				f: func(r *IRSAReconciler, obj *irsav1alpha1.IRSA) {
+					expected := []expectedResource{
+						{
+							NamespacedName: types.NamespacedName{Name: "sa-1", Namespace: "kube-system"},
+							f:              newServiceAccount,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "sa-1", Namespace: "default"},
+							f:              newServiceAccount,
+						},
+					}
+
+					By("Reconciling the created resource")
+					typeNamespacedName := types.NamespacedName{
+						Name:      obj.Name,
+						Namespace: obj.Namespace,
+					}
+
+					By("Error when creating role")
+					r.AwsClient = newMockAwsClient(&mockAwsIamAPI{createRoleErr: fmt.Errorf("createRoleErr")}, nil, nil)
+					_, err := r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).To(HaveOccurred())
+					for _, expect := range expected {
+						checkNoExist(expect)
+					}
+
+					By("successfully Reconciling")
+					r.AwsClient = newMockAwsClient(&mockAwsIamAPI{}, nil, nil)
+					_, err = r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).NotTo(HaveOccurred())
+					for _, expect := range expected {
+						checkExist(expect)
+					}
+					By("removing the custom resource for the Kind")
+					Eventually(func() error {
+						return k8sClient.Delete(ctx, obj)
+					}, timeout).Should(Succeed())
+					_, err = r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).To(Not(HaveOccurred()))
+					for _, expect := range expected {
+						checkNoExist(expect)
+					}
+				},
+			},
+		}
+		for _, tt := range tests {
+			It(tt.name, func() {
+				typeNamespacedName := types.NamespacedName{
+					Name:      tt.objs.Name,
+					Namespace: tt.objs.Namespace,
 				}
-				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
-			}
-		})
-
-		AfterEach(func() {
-			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &irsav1alpha1.IRSA{}
-			err := k8sClient.Get(ctx, typeNamespacedName, resource)
-			Expect(err).NotTo(HaveOccurred())
-
-			By("Cleanup the specific resource instance IRSA")
-			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
-		})
-		It("should successfully reconcile the resource", func() {
-			By("Reconciling the created resource")
-			controllerReconciler := &IRSAReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
-			}
-
-			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
+				controllerReconciler := &IRSAReconciler{
+					Client:    k8sClient,
+					Scheme:    k8sClient.Scheme(),
+					AwsClient: newMockAwsClient(&mockAwsIamAPI{}, nil, nil),
+				}
+				By("creating the custom resource for the Kind IRSASetup")
+				err := k8sClient.Get(ctx, typeNamespacedName, tt.objs)
+				if err != nil && errors.IsNotFound(err) {
+					Expect(k8sClient.Create(ctx, tt.objs)).To(Succeed())
+				}
+				_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
+					NamespacedName: typeNamespacedName,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				tt.f(controllerReconciler, tt.objs)
 			})
-			Expect(err).NotTo(HaveOccurred())
-			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-			// Example: If you expect a certain status condition after reconciliation, verify it here.
+		}
+		BeforeEach(func() {
+		})
+		AfterEach(func() {
 		})
 	})
 })

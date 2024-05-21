@@ -1,6 +1,9 @@
 package manifests
 
 import (
+	"fmt"
+
+	awsclient "github.com/kkb0318/irsa-manager/internal/aws"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -14,8 +17,10 @@ func NewServiceAccountBuilder() *ServiceAccountBuilder {
 	return &ServiceAccountBuilder{}
 }
 
-func (b *ServiceAccountBuilder) WithAnnotation(annotation map[string]string) *ServiceAccountBuilder {
-	b.annotation = annotation
+func (b *ServiceAccountBuilder) WithIRSAAnnotation(role awsclient.RoleManager) *ServiceAccountBuilder {
+	b.annotation = map[string]string{
+		"eks.amazonaws.com/role-arn": fmt.Sprintf("arn:aws:iam::%s:role/%s", role.AccountId, role.RoleName),
+	}
 	return b
 }
 
