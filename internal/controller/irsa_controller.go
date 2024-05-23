@@ -18,9 +18,11 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	awsclient "github.com/kkb0318/irsa-manager/internal/aws"
 	"github.com/kkb0318/irsa-manager/internal/handler"
+	"github.com/kkb0318/irsa-manager/internal/issuer"
 	"github.com/kkb0318/irsa-manager/internal/kubernetes"
 	"github.com/kkb0318/irsa-manager/internal/manifests"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -126,6 +128,19 @@ func (r *IRSAReconciler) reconcileDelete(ctx context.Context, obj *irsav1alpha1.
 }
 
 func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, kubeClient *kubernetes.KubernetesClient) error {
+	list, err := kubeClient.List(ctx, irsav1alpha1.GroupVersion.WithKind(irsav1alpha1.IRSAKind))
+	if err != nil {
+		return err
+	}
+	if len(list.Items) != 1 {
+		return fmt.Errorf("there should be exactly one IRSASetup item")
+	}
+	irsaSetup := &irsav1alpha1.IRSASetup{}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(list.Items[0].Object, irsaSetup)
+	if err != nil {
+		return fmt.Errorf("error converting to IRSASetup for %s: %v", list.Items[0].GetName(), err)
+	}
+
 	serviceAccount := obj.Spec.ServiceAccount
 	accountId, err := r.AwsClient.StsClient().GetAccountId()
 	if err != nil {
@@ -137,7 +152,10 @@ func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, 
 		Policies:   obj.Spec.IamPolicies,
 		AccountId:  accountId,
 	}
-	err = r.AwsClient.IamClient().CreateIRSARole(ctx, "", roleManager)
+	err = r.AwsClient.IamClient().CreateIRSARole(ctx,
+		issuer.NewS3IssuerMeta(irsaSetup.Spec.Discovery.S3),
+		roleManager,
+	)
 	if err != nil {
 		return err
 	}

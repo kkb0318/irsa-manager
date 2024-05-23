@@ -20,6 +20,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// IRSAKind represents the kind attribute of an IRSA resource.
+	IRSAKind = "IRSA"
+)
+
 // IRSASpec defines the desired state of IRSA
 type IRSASpec struct {
 	// Cleanup, when enabled, allows the IRSA to perform garbage collection

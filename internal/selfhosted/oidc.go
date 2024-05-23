@@ -1,11 +1,10 @@
 package selfhosted
 
-import "context"
+import (
+	"context"
 
-type OIDCIssuerMeta interface {
-	IssuerHostPath() string
-	IssuerUrl() string
-}
+	"github.com/kkb0318/irsa-manager/internal/issuer"
+)
 
 type OIDCIdP interface {
 	Create(ctx context.Context) error
@@ -27,8 +26,7 @@ type OIDCIdPDiscovery interface {
 }
 
 type OIDCIdPFactory interface {
-	IssuerMeta() OIDCIssuerMeta
-	IdP(i OIDCIssuerMeta) (OIDCIdP, error)
+	IdP(i issuer.OIDCIssuerMeta) (OIDCIdP, error)
 	IdPDiscovery() OIDCIdPDiscovery
-	IdPDiscoveryContents(i OIDCIssuerMeta) OIDCIdPDiscoveryContents
+	IdPDiscoveryContents(i issuer.OIDCIssuerMeta) OIDCIdPDiscoveryContents
 }

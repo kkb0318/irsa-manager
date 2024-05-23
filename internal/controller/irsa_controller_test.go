@@ -23,6 +23,7 @@ import (
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,13 +34,14 @@ import (
 var _ = Describe("IRSA Controller", func() {
 	Context("When reconciling IRSA", func() {
 		tests := []struct {
-			name string
-			objs *irsav1alpha1.IRSA
-			f    func(*IRSAReconciler, *irsav1alpha1.IRSA)
+			name         string
+			obj          *irsav1alpha1.IRSA
+			irsaSetupObj *irsav1alpha1.IRSASetup
+			f            func(*IRSAReconciler, *irsav1alpha1.IRSA)
 		}{
 			{
 				name: "should reconcile successfully",
-				objs: &irsav1alpha1.IRSA{
+				obj: &irsav1alpha1.IRSA{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-resource1",
 						Namespace: "default",
@@ -54,6 +56,7 @@ var _ = Describe("IRSA Controller", func() {
 						},
 					},
 				},
+				irsaSetupObj: newMockIRSASetup(),
 				f: func(r *IRSAReconciler, obj *irsav1alpha1.IRSA) {
 					expected := []expectedResource{
 						{
@@ -98,7 +101,7 @@ var _ = Describe("IRSA Controller", func() {
 			},
 			{
 				name: "error",
-				objs: &irsav1alpha1.IRSA{
+				obj: &irsav1alpha1.IRSA{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-resource2",
 						Namespace: "default",
@@ -113,6 +116,7 @@ var _ = Describe("IRSA Controller", func() {
 						},
 					},
 				},
+				irsaSetupObj: newMockIRSASetup(),
 				f: func(r *IRSAReconciler, obj *irsav1alpha1.IRSA) {
 					expected := []expectedResource{
 						{
@@ -167,24 +171,39 @@ var _ = Describe("IRSA Controller", func() {
 		for _, tt := range tests {
 			It(tt.name, func() {
 				typeNamespacedName := types.NamespacedName{
-					Name:      tt.objs.Name,
-					Namespace: tt.objs.Namespace,
+					Name:      tt.obj.Name,
+					Namespace: tt.obj.Namespace,
 				}
 				controllerReconciler := &IRSAReconciler{
 					Client:    k8sClient,
 					Scheme:    k8sClient.Scheme(),
 					AwsClient: newMockAwsClient(&mockAwsIamAPI{}, nil, nil),
 				}
-				By("creating the custom resource for the Kind IRSASetup")
-				err := k8sClient.Get(ctx, typeNamespacedName, tt.objs)
+				By("creating the mock ISASetup")
+				if tt.irsaSetupObj != nil {
+					err := k8sClient.Get(ctx, client.ObjectKeyFromObject(tt.irsaSetupObj), tt.irsaSetupObj)
+					if err != nil && errors.IsNotFound(err) {
+						Expect(k8sClient.Create(ctx, tt.obj)).To(Succeed())
+					}
+
+				}
+				By("creating the custom resource for the Kind IRSA")
+				err := k8sClient.Get(ctx, typeNamespacedName, tt.obj)
 				if err != nil && errors.IsNotFound(err) {
-					Expect(k8sClient.Create(ctx, tt.objs)).To(Succeed())
+					Expect(k8sClient.Create(ctx, tt.obj)).To(Succeed())
 				}
 				_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
 					NamespacedName: typeNamespacedName,
 				})
 				Expect(err).NotTo(HaveOccurred())
-				tt.f(controllerReconciler, tt.objs)
+				tt.f(controllerReconciler, tt.obj)
+
+				By("deleting the mock ISASetup")
+				err = k8sClient.Get(ctx, client.ObjectKeyFromObject(tt.irsaSetupObj), tt.irsaSetupObj)
+				if err == nil {
+					err = k8sClient.Delete(ctx, tt.irsaSetupObj)
+					Expect(err).NotTo(HaveOccurred())
+				}
 			})
 		}
 		BeforeEach(func() {
@@ -193,3 +212,20 @@ var _ = Describe("IRSA Controller", func() {
 		})
 	})
 })
+
+func newMockIRSASetup() *irsav1alpha1.IRSASetup {
+	return &irsav1alpha1.IRSASetup{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test",
+			Namespace: "default",
+		},
+		Spec: irsav1alpha1.IRSASetupSpec{
+			Discovery: irsav1alpha1.Discovery{
+				S3: irsav1alpha1.S3Discovery{
+					Region:     "ap-northeast-1",
+					BucketName: "irsa-manager-1",
+				},
+			},
+		},
+	}
+}

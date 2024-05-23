@@ -28,6 +28,7 @@ import (
 	irsav1alpha1 "github.com/kkb0318/irsa-manager/api/v1alpha1"
 	awsclient "github.com/kkb0318/irsa-manager/internal/aws"
 	"github.com/kkb0318/irsa-manager/internal/handler"
+	"github.com/kkb0318/irsa-manager/internal/issuer"
 	"github.com/kkb0318/irsa-manager/internal/kubernetes"
 	"github.com/kkb0318/irsa-manager/internal/manifests"
 	"github.com/kkb0318/irsa-manager/internal/selfhosted"
@@ -153,7 +154,11 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 	if err != nil {
 		return err
 	}
-	return selfhosted.Delete(ctx, factory)
+	return selfhosted.Delete(
+		ctx,
+		factory,
+		issuer.NewS3IssuerMeta(obj.Spec.Discovery.S3),
+	)
 }
 
 // reconcileSelfhosted ensures that the self-hosted resources are set up correctly.
@@ -207,7 +212,12 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 		string(irsav1alpha1.SelfHostedReasonFailedKeys),
 		string(irsav1alpha1.SelfHostedReasonFailedOidc),
 	)
-	err = selfhosted.Execute(ctx, factory, forceUpdate)
+	err = selfhosted.Execute(
+		ctx,
+		factory,
+		issuer.NewS3IssuerMeta(obj.Spec.Discovery.S3),
+		forceUpdate,
+	)
 	if err != nil {
 		e = err
 		reason = irsav1alpha1.SelfHostedReasonFailedOidc

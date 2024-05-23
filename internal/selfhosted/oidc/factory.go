@@ -4,6 +4,7 @@ import (
 	"context"
 
 	awsclient "github.com/kkb0318/irsa-manager/internal/aws"
+	"github.com/kkb0318/irsa-manager/internal/issuer"
 	"github.com/kkb0318/irsa-manager/internal/selfhosted"
 )
 
@@ -32,11 +33,7 @@ func NewAwsS3IdpFactory(
 	}, nil
 }
 
-func (f *AwsS3IdPFactory) IssuerMeta() selfhosted.OIDCIssuerMeta {
-	return NewS3IssuerMeta(f.region, f.bucketName)
-}
-
-func (f *AwsS3IdPFactory) IdP(i selfhosted.OIDCIssuerMeta) (selfhosted.OIDCIdP, error) {
+func (f *AwsS3IdPFactory) IdP(i issuer.OIDCIssuerMeta) (selfhosted.OIDCIdP, error) {
 	return NewAwsIdP(f.awsClient, i)
 }
 
@@ -44,6 +41,6 @@ func (f *AwsS3IdPFactory) IdPDiscovery() selfhosted.OIDCIdPDiscovery {
 	return NewS3IdPDiscovery(f.awsClient, f.region, f.bucketName)
 }
 
-func (f *AwsS3IdPFactory) IdPDiscoveryContents(i selfhosted.OIDCIssuerMeta) selfhosted.OIDCIdPDiscoveryContents {
+func (f *AwsS3IdPFactory) IdPDiscoveryContents(i issuer.OIDCIssuerMeta) selfhosted.OIDCIdPDiscoveryContents {
 	return NewIdPDiscoveryContents(f.jwk, i, f.jwksFileName)
 }

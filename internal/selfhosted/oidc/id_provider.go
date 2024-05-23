@@ -4,16 +4,16 @@ import (
 	"context"
 
 	awsclient "github.com/kkb0318/irsa-manager/internal/aws"
-	"github.com/kkb0318/irsa-manager/internal/selfhosted"
+	"github.com/kkb0318/irsa-manager/internal/issuer"
 )
 
 type AwsIdP struct {
 	iamClient  *awsclient.AwsIamClient
 	stsClient  *awsclient.AwsStsClient
-	issuerMeta selfhosted.OIDCIssuerMeta
+	issuerMeta issuer.OIDCIssuerMeta
 }
 
-func NewAwsIdP(awsConfig awsclient.AwsClient, issuerMeta selfhosted.OIDCIssuerMeta) (*AwsIdP, error) {
+func NewAwsIdP(awsConfig awsclient.AwsClient, issuerMeta issuer.OIDCIssuerMeta) (*AwsIdP, error) {
 	iamClient := awsConfig.IamClient()
 	stsClient := awsConfig.StsClient()
 	return &AwsIdP{iamClient, stsClient, issuerMeta}, nil

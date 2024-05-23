@@ -57,7 +57,7 @@ var _ = Describe("IRSASetup Controller", func() {
 						Discovery: irsav1alpha1.Discovery{
 							S3: irsav1alpha1.S3Discovery{
 								Region:     "ap-northeast-1",
-								BucketName: "irsa-manager-kkb-1",
+								BucketName: "irsa-manager-1",
 							},
 						},
 					},
@@ -138,7 +138,7 @@ var _ = Describe("IRSASetup Controller", func() {
 						Discovery: irsav1alpha1.Discovery{
 							S3: irsav1alpha1.S3Discovery{
 								Region:     "ap-northeast-1",
-								BucketName: "irsa-manager-kkb-1",
+								BucketName: "irsa-manager-1",
 							},
 						},
 					},
@@ -223,7 +223,7 @@ var _ = Describe("IRSASetup Controller", func() {
 						Discovery: irsav1alpha1.Discovery{
 							S3: irsav1alpha1.S3Discovery{
 								Region:     "ap-northeast-1",
-								BucketName: "irsa-manager-kkb-1",
+								BucketName: "irsa-manager-1",
 							},
 						},
 					},

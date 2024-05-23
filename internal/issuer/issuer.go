@@ -1,10 +1,12 @@
-package oidc
+package issuer
 
 import (
 	"fmt"
+
+	irsav1alpha1 "github.com/kkb0318/irsa-manager/api/v1alpha1"
 )
 
-type IssuerMeta interface {
+type OIDCIssuerMeta interface {
 	IssuerHostPath() string
 	IssuerUrl() string
 }
@@ -14,8 +16,8 @@ type S3IssuerMeta struct {
 	bucketName string
 }
 
-func NewS3IssuerMeta(region, bucketName string) *S3IssuerMeta {
-	return &S3IssuerMeta{region, bucketName}
+func NewS3IssuerMeta(s3 irsav1alpha1.S3Discovery) *S3IssuerMeta {
+	return &S3IssuerMeta{s3.Region, s3.BucketName}
 }
 
 func (i *S3IssuerMeta) IssuerHostPath() string {

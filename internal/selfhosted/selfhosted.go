@@ -2,10 +2,11 @@ package selfhosted
 
 import (
 	"context"
+
+	"github.com/kkb0318/irsa-manager/internal/issuer"
 )
 
-func Execute(ctx context.Context, idpComponentsFactory OIDCIdPFactory, forceUpdate bool) error {
-	issuerMeta := idpComponentsFactory.IssuerMeta()
+func Execute(ctx context.Context, idpComponentsFactory OIDCIdPFactory, issuerMeta issuer.OIDCIssuerMeta, forceUpdate bool) error {
 	discovery := idpComponentsFactory.IdPDiscovery()
 	discoveryContents := idpComponentsFactory.IdPDiscoveryContents(issuerMeta)
 	idp, err := idpComponentsFactory.IdP(issuerMeta)
@@ -27,8 +28,7 @@ func Execute(ctx context.Context, idpComponentsFactory OIDCIdPFactory, forceUpda
 	return nil
 }
 
-func Delete(ctx context.Context, factory OIDCIdPFactory) error {
-	issuerMeta := factory.IssuerMeta()
+func Delete(ctx context.Context, factory OIDCIdPFactory, issuerMeta issuer.OIDCIssuerMeta) error {
 	discovery := factory.IdPDiscovery()
 	discoveryContents := factory.IdPDiscoveryContents(issuerMeta)
 	idp, err := factory.IdP(issuerMeta)

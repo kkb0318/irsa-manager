@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/kkb0318/irsa-manager/internal/issuer"
 	"github.com/kkb0318/irsa-manager/internal/selfhosted"
 )
 
 type IdPDiscoveryContents struct {
 	jwk          *selfhosted.JWK
-	issuerMeta   selfhosted.OIDCIssuerMeta
+	issuerMeta   issuer.OIDCIssuerMeta
 	jwksFileName string
 }
 
@@ -23,7 +24,7 @@ type oidcDiscoveryConfiguration struct {
 	ClaimsSupported                  []string `json:"claims_supported"`
 }
 
-func NewIdPDiscoveryContents(jwk *selfhosted.JWK, issuerMeta selfhosted.OIDCIssuerMeta, jwksFileName string) *IdPDiscoveryContents {
+func NewIdPDiscoveryContents(jwk *selfhosted.JWK, issuerMeta issuer.OIDCIssuerMeta, jwksFileName string) *IdPDiscoveryContents {
 	return &IdPDiscoveryContents{jwk, issuerMeta, jwksFileName}
 }
 
