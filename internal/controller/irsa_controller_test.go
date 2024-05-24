@@ -47,6 +47,7 @@ var _ = Describe("IRSA Controller", func() {
 						Namespace: "default",
 					},
 					Spec: irsav1alpha1.IRSASpec{
+						Cleanup: true,
 						ServiceAccount: irsav1alpha1.IRSAServiceAccount{
 							Name: "sa-1",
 							Namespaces: []string{
@@ -107,6 +108,7 @@ var _ = Describe("IRSA Controller", func() {
 						Namespace: "default",
 					},
 					Spec: irsav1alpha1.IRSASpec{
+						Cleanup: true,
 						ServiceAccount: irsav1alpha1.IRSAServiceAccount{
 							Name: "sa-2",
 							Namespaces: []string{
