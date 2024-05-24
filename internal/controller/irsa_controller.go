@@ -117,14 +117,21 @@ func (r *IRSAReconciler) reconcileDelete(ctx context.Context, obj *irsav1alpha1.
 	if !obj.Spec.Cleanup {
 		return nil
 	}
+	serviceAccount := obj.Spec.ServiceAccount
+	kubeHandler := handler.NewKubernetesHandler(kubeClient)
+	for _, ns := range serviceAccount.Namespaces {
+		sa := manifests.NewServiceAccountBuilder().Build(types.NamespacedName{
+			Name:      serviceAccount.Name,
+			Namespace: ns,
+		})
+		kubeHandler.Append(sa)
+
+	}
+	err := kubeHandler.DeleteAll(ctx)
+	if err != nil {
+		return err
+	}
 	return nil
-	// kubeHandler := handler.NewKubernetesHandler(kubeClient)
-	// kubeHandler.Append(secret)
-	//  err := kubeHandler.DeleteAll(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-	// return selfhosted.Delete(ctx, factory)
 }
 
 func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, kubeClient *kubernetes.KubernetesClient) error {
@@ -167,7 +174,6 @@ func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, 
 			Namespace: ns,
 		})
 		kubeHandler.Append(sa)
-
 	}
 	return kubeHandler.ApplyAll(ctx)
 }

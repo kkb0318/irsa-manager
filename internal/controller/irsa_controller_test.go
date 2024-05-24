@@ -120,11 +120,11 @@ var _ = Describe("IRSA Controller", func() {
 				f: func(r *IRSAReconciler, obj *irsav1alpha1.IRSA) {
 					expected := []expectedResource{
 						{
-							NamespacedName: types.NamespacedName{Name: "sa-1", Namespace: "kube-system"},
+							NamespacedName: types.NamespacedName{Name: "sa-2", Namespace: "kube-system"},
 							f:              newServiceAccount,
 						},
 						{
-							NamespacedName: types.NamespacedName{Name: "sa-1", Namespace: "default"},
+							NamespacedName: types.NamespacedName{Name: "sa-2", Namespace: "default"},
 							f:              newServiceAccount,
 						},
 					}
