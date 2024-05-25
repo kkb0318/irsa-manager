@@ -154,10 +154,14 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 	if err != nil {
 		return err
 	}
+	issuerMeta, err := issuer.NewS3IssuerMeta(&obj.Spec.Discovery.S3)
+	if err != nil {
+		return err
+	}
 	return selfhosted.Delete(
 		ctx,
 		factory,
-		issuer.NewS3IssuerMeta(obj.Spec.Discovery.S3),
+		issuerMeta,
 	)
 }
 
@@ -212,10 +216,14 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 		string(irsav1alpha1.SelfHostedReasonFailedKeys),
 		string(irsav1alpha1.SelfHostedReasonFailedOidc),
 	)
+	issuerMeta, err := issuer.NewS3IssuerMeta(&obj.Spec.Discovery.S3)
+	if err != nil {
+		return err
+	}
 	err = selfhosted.Execute(
 		ctx,
 		factory,
-		issuer.NewS3IssuerMeta(obj.Spec.Discovery.S3),
+		issuerMeta,
 		forceUpdate,
 	)
 	if err != nil {

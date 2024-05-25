@@ -45,6 +45,8 @@ type IRSAReconciler struct {
 //+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsas,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsas/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsas/finalizers,verbs=update
+//+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsasetups,verbs=get;list
+//+kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -108,7 +110,6 @@ func (r *IRSAReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
-	// roleArn: arn:aws:iam::{accountId}:role/{roleName}
 	log.Info("successfully reconciled")
 	return ctrl.Result{}, nil
 }
@@ -135,7 +136,7 @@ func (r *IRSAReconciler) reconcileDelete(ctx context.Context, obj *irsav1alpha1.
 }
 
 func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, kubeClient *kubernetes.KubernetesClient) error {
-	list, err := kubeClient.List(ctx, irsav1alpha1.GroupVersion.WithKind(irsav1alpha1.IRSAKind))
+	list, err := kubeClient.List(ctx, irsav1alpha1.GroupVersion.WithKind(irsav1alpha1.IRSASetupKind))
 	if err != nil {
 		return err
 	}
@@ -159,8 +160,12 @@ func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, 
 		Policies:   obj.Spec.IamPolicies,
 		AccountId:  accountId,
 	}
+	issuerMeta, err := issuer.NewS3IssuerMeta(&irsaSetup.Spec.Discovery.S3)
+	if err != nil {
+		return err
+	}
 	err = r.AwsClient.IamClient().CreateIRSARole(ctx,
-		issuer.NewS3IssuerMeta(irsaSetup.Spec.Discovery.S3),
+		issuerMeta,
 		roleManager,
 	)
 	if err != nil {

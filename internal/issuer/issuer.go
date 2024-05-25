@@ -16,8 +16,13 @@ type S3IssuerMeta struct {
 	bucketName string
 }
 
-func NewS3IssuerMeta(s3 irsav1alpha1.S3Discovery) *S3IssuerMeta {
-	return &S3IssuerMeta{s3.Region, s3.BucketName}
+func NewS3IssuerMeta(s3 *irsav1alpha1.S3Discovery) (*S3IssuerMeta, error) {
+	region := s3.Region
+	bucketName := s3.BucketName
+	if region == "" || bucketName == "" {
+		return nil, fmt.Errorf("s3 region and bucket name must not be empty. region: %s, bucketName: %s", region, bucketName)
+	}
+	return &S3IssuerMeta{region, bucketName}, nil
 }
 
 func (i *S3IssuerMeta) IssuerHostPath() string {
