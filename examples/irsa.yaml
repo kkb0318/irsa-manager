@@ -1,0 +1,16 @@
+apiVersion: irsa.kkb0318.github.io/v1alpha1
+kind: IRSA
+metadata:
+  name: irsa-sample
+  namespace: irsa-manager-system
+spec:
+  cleanup: true
+  serviceAccount:
+    name: irsa1-sa
+    namespaces:
+      - kube-system
+      - default
+  iamRole:
+    name: irsa1-role
+  iamPolicies:
+    - AmazonS3FullAccess

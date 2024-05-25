@@ -222,10 +222,3 @@ else
 OPERATOR_SDK = $(shell which operator-sdk)
 endif
 endif
-
-.PHONY: test-deploy
-test-deploy: build install
-	docker build . -t ghcr.io/kkb0318/irsa-manager
-	docker push ghcr.io/kkb0318/irsa-manager:latest
-
-
