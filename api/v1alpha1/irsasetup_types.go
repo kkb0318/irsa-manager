@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"github.com/fluxcd/pkg/apis/meta"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -81,14 +80,14 @@ type IRSASetupStatus struct {
 	SelfHostedSetup []metav1.Condition `json:"selfHostedSetup,omitempty"`
 }
 
-// GetStatusConditions returns a pointer to the Status.Conditions slice
+// GetSelfhostedStatusConditions returns a pointer to the Status.Conditions slice
 func (in *IRSASetup) GetSelfhostedStatusConditions() *[]metav1.Condition {
 	return &in.Status.SelfHostedSetup
 }
 
 func SetupSelfHostedStatusReady(irsa IRSASetup, reason, message string) IRSASetup {
 	newCondition := metav1.Condition{
-		Type:    meta.ReadyCondition,
+		Type:    ReadyCondition,
 		Status:  metav1.ConditionTrue,
 		Reason:  reason,
 		Message: message,
@@ -99,7 +98,7 @@ func SetupSelfHostedStatusReady(irsa IRSASetup, reason, message string) IRSASetu
 
 func SelfHostedStatusNotReady(irsa IRSASetup, reason, message string) IRSASetup {
 	newCondition := metav1.Condition{
-		Type:    meta.ReadyCondition,
+		Type:    ReadyCondition,
 		Status:  metav1.ConditionFalse,
 		Reason:  reason,
 		Message: message,
@@ -110,7 +109,7 @@ func SelfHostedStatusNotReady(irsa IRSASetup, reason, message string) IRSASetup 
 
 // SelfHostedReadyStatus
 func SelfHostedReadyStatus(irsa IRSASetup) *metav1.Condition {
-	if c := apimeta.FindStatusCondition(irsa.Status.SelfHostedSetup, meta.ReadyCondition); c != nil {
+	if c := apimeta.FindStatusCondition(irsa.Status.SelfHostedSetup, ReadyCondition); c != nil {
 		return c
 	}
 	return nil
@@ -130,7 +129,7 @@ func HasConditionReason(cond *metav1.Condition, reasons ...string) bool {
 }
 
 func IsSelfHostedReadyConditionTrue(irsa IRSASetup) bool {
-	return apimeta.IsStatusConditionTrue(irsa.Status.SelfHostedSetup, meta.ReadyCondition)
+	return apimeta.IsStatusConditionTrue(irsa.Status.SelfHostedSetup, ReadyCondition)
 }
 
 type SelfHostedReason string

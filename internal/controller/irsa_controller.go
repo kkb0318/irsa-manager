@@ -159,10 +159,23 @@ func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, 
 	if err != nil {
 		return fmt.Errorf("error converting to IRSASetup for %s: %v", list.Items[0].GetName(), err)
 	}
-
 	serviceAccount := obj.Spec.ServiceAccount
+	issuerMeta, err := issuer.NewS3IssuerMeta(&irsaSetup.Spec.Discovery.S3)
+	if err != nil {
+		return err
+	}
+	// e is set only when an error occurs in an external dependency process and is reflected in the CRs status
+	var e error
+	var reason irsav1alpha1.IRSAReason
+	defer func() {
+		if e != nil {
+			*obj = irsav1alpha1.IRSAStatusNotReady(*obj, string(reason), e.Error())
+		}
+	}()
+
 	accountId, err := r.AwsClient.StsClient().GetAccountId()
 	if err != nil {
+		e = err
 		return err
 	}
 	roleManager := awsclient.RoleManager{
@@ -171,18 +184,17 @@ func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, 
 		Policies:       obj.Spec.IamPolicies,
 		AccountId:      accountId,
 	}
-	issuerMeta, err := issuer.NewS3IssuerMeta(&irsaSetup.Spec.Discovery.S3)
-	if err != nil {
-		return err
-	}
 	err = r.AwsClient.IamClient().CreateIRSARole(
 		ctx,
 		issuerMeta,
 		roleManager,
 	)
 	if err != nil {
+		e = err
+		reason = irsav1alpha1.IRSAReasonFailedRoleUpdate
 		return err
 	}
+
 	kubeHandler := handler.NewKubernetesHandler(kubeClient)
 
 	for _, ns := range serviceAccount.Namespaces {
@@ -192,7 +204,14 @@ func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, 
 		})
 		kubeHandler.Append(sa)
 	}
-	return kubeHandler.ApplyAll(ctx)
+	err = kubeHandler.ApplyAll(ctx)
+	if err != nil {
+		e = err
+		reason = irsav1alpha1.IRSAReasonFailedK8sApply
+		return err
+	}
+	*obj = irsav1alpha1.IRSAStatusReady(*obj, string(irsav1alpha1.IRSAReasonReady), "successfully setup resources")
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

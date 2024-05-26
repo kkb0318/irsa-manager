@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -55,12 +56,47 @@ type IamRole struct {
 
 // IRSAStatus defines the observed state of IRSA
 type IRSAStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
+
+// GetIRSAStatusConditions returns a pointer to the Status.Conditions slice
+func (in *IRSA) GetIRSAStatusConditions() *[]metav1.Condition {
+	return &in.Status.Conditions
+}
+
+func IRSAStatusReady(irsa IRSA, reason, message string) IRSA {
+	newCondition := metav1.Condition{
+		Type:    ReadyCondition,
+		Status:  metav1.ConditionTrue,
+		Reason:  reason,
+		Message: message,
+	}
+	apimeta.SetStatusCondition(irsa.GetIRSAStatusConditions(), newCondition)
+	return irsa
+}
+
+func IRSAStatusNotReady(irsa IRSA, reason, message string) IRSA {
+	newCondition := metav1.Condition{
+		Type:    ReadyCondition,
+		Status:  metav1.ConditionFalse,
+		Reason:  reason,
+		Message: message,
+	}
+	apimeta.SetStatusCondition(irsa.GetIRSAStatusConditions(), newCondition)
+	return irsa
+}
+
+type IRSAReason string
+
+const (
+	IRSAReasonFailedRoleUpdate IRSAReason = "IRSAFailedRoleUpdate"
+	IRSAReasonFailedK8sApply   IRSAReason = "IRSAFailedApplyingResources"
+	IRSAReasonReady            IRSAReason = "IRSAReady"
+)
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].status",description=""
 
 // IRSA is the Schema for the irsas API
 type IRSA struct {

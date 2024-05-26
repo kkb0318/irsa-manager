@@ -203,6 +203,7 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 		return err
 	}
 
+	// e is set only when an error occurs in an external dependency process and is reflected in the CRs status
 	var e error
 	var reason irsav1alpha1.SelfHostedReason
 	defer func() {
