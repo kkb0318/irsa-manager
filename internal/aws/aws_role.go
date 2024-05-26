@@ -46,7 +46,7 @@ func (a *AwsIamClient) DeleteIRSARole(ctx context.Context, r RoleManager) error 
 		}
 		_, err := a.Client.DetachRolePolicy(ctx, detachRolePolicyInput)
 		// Ignore error if the policy is already detached or the role does not exist
-		if errorHandle(err, []string{"NoSuchEntity"}) != nil {
+		if errorHandler(err, []string{"NoSuchEntity"}) != nil {
 			return err
 		}
 		log.Printf("Policy %s detached from role %s successfully", policy, r.RoleName)
@@ -55,7 +55,7 @@ func (a *AwsIamClient) DeleteIRSARole(ctx context.Context, r RoleManager) error 
 	input := &iam.DeleteRoleInput{RoleName: aws.String(r.RoleName)}
 	_, err := a.Client.DeleteRole(ctx, input)
 	// Ignore error if the role does not exist or there are other policies that this controller does not manage
-	if errorHandle(err, []string{"DeleteConflict", "NoSuchEntity"}) != nil {
+	if errorHandler(err, []string{"DeleteConflict", "NoSuchEntity"}) != nil {
 		return err
 	}
 	log.Printf("Role %s deleted successfully", r.RoleName)
@@ -94,7 +94,7 @@ func (a *AwsIamClient) CreateIRSARole(ctx context.Context, issuerMeta issuer.OID
 	}
 
 	_, err = a.Client.CreateRole(context.TODO(), createRoleInput)
-	if errorHandle(err, []string{"EntityAlreadyExists"}) != nil {
+	if errorHandler(err, []string{"EntityAlreadyExists"}) != nil {
 		return err
 	}
 	log.Printf("Role %s created successfully", r.RoleName)
@@ -126,8 +126,8 @@ func (a *AwsIamClient) CreateIRSARole(ctx context.Context, issuerMeta issuer.OID
 	return nil
 }
 
-// errorHandle handles specific errors by checking the error code against a list of codes to ignore
-func errorHandle(err error, errorCodes []string) error {
+// errorHandler handles specific errors by checking the error code against a list of codes to ignore
+func errorHandler(err error, errorCodes []string) error {
 	if err != nil {
 		var ae smithy.APIError
 		if errors.As(err, &ae) && slices.Contains(errorCodes, ae.ErrorCode()) {

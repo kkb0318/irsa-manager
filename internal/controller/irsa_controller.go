@@ -120,6 +120,17 @@ func (r *IRSAReconciler) reconcileDelete(ctx context.Context, obj *irsav1alpha1.
 	}
 	serviceAccount := obj.Spec.ServiceAccount
 	kubeHandler := handler.NewKubernetesHandler(kubeClient)
+	roleManager := awsclient.RoleManager{
+		RoleName: obj.Spec.IamRole.Name,
+		Policies: obj.Spec.IamPolicies,
+	}
+	err := r.AwsClient.IamClient().DeleteIRSARole(
+		ctx,
+		roleManager,
+	)
+	if err != nil {
+		return err
+	}
 	for _, ns := range serviceAccount.Namespaces {
 		sa := manifests.NewServiceAccountBuilder().Build(types.NamespacedName{
 			Name:      serviceAccount.Name,
@@ -128,7 +139,7 @@ func (r *IRSAReconciler) reconcileDelete(ctx context.Context, obj *irsav1alpha1.
 		kubeHandler.Append(sa)
 
 	}
-	err := kubeHandler.DeleteAll(ctx)
+	err = kubeHandler.DeleteAll(ctx)
 	if err != nil {
 		return err
 	}
