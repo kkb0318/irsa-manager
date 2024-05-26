@@ -183,9 +183,9 @@ var _ = Describe("IRSA Controller", func() {
 				}
 				By("creating the mock ISASetup")
 				if tt.irsaSetupObj != nil {
-					err := k8sClient.Get(ctx, client.ObjectKeyFromObject(tt.irsaSetupObj), tt.irsaSetupObj)
+					err := k8sClient.Get(ctx, client.ObjectKeyFromObject(tt.irsaSetupObj), &irsav1alpha1.IRSASetup{})
 					if err != nil && errors.IsNotFound(err) {
-						Expect(k8sClient.Create(ctx, tt.obj)).To(Succeed())
+						Expect(k8sClient.Create(ctx, tt.irsaSetupObj)).To(Succeed())
 					}
 
 				}

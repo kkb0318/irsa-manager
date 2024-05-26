@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/smithy-go"
+	irsav1alpha1 "github.com/kkb0318/irsa-manager/api/v1alpha1"
 	"github.com/kkb0318/irsa-manager/internal/issuer"
 )
 
@@ -19,8 +20,8 @@ import (
 type RoleManager struct {
 	// RoleName represents the name of the IAM role
 	RoleName string
-	// Namespaces represents the list of namespaces associated with the role
-	Namespaces []string
+	// ServiceAccount represents the ServiceAccount Name and namespaces associated with the role
+	ServiceAccount irsav1alpha1.IRSAServiceAccount
 	// Policies represents the list of policies to be attached to the role
 	Policies []string
 
@@ -64,8 +65,8 @@ func (a *AwsIamClient) DeleteIRSARole(ctx context.Context, r RoleManager) error 
 // CreateIRSARole creates an IAM role with the specified trust policy and attaches specified policies to it
 func (a *AwsIamClient) CreateIRSARole(ctx context.Context, issuerMeta issuer.OIDCIssuerMeta, r RoleManager) error {
 	providerArn := fmt.Sprintf("arn:aws:iam::%s:oidc-provider/%s", r.AccountId, issuerMeta.IssuerHostPath())
-	statement := make([]map[string]interface{}, len(r.Namespaces))
-	for i, ns := range r.Namespaces {
+	statement := make([]map[string]interface{}, len(r.ServiceAccount.Namespaces))
+	for i, ns := range r.ServiceAccount.Namespaces {
 		statement[i] = map[string]interface{}{
 			"Effect": "Allow",
 			"Principal": map[string]interface{}{
@@ -74,7 +75,7 @@ func (a *AwsIamClient) CreateIRSARole(ctx context.Context, issuerMeta issuer.OID
 			"Action": "sts:AssumeRoleWithWebIdentity",
 			"Condition": map[string]interface{}{
 				"StringEquals": map[string]interface{}{
-					fmt.Sprintf("%s:sub", issuerMeta.IssuerHostPath()): fmt.Sprintf("system:serviceaccount:%s:%s", ns, r.RoleName),
+					fmt.Sprintf("%s:sub", issuerMeta.IssuerHostPath()): fmt.Sprintf("system:serviceaccount:%s:%s", ns, r.ServiceAccount.Name),
 				},
 			},
 		}

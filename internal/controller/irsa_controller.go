@@ -155,16 +155,17 @@ func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, 
 		return err
 	}
 	roleManager := awsclient.RoleManager{
-		RoleName:   obj.Spec.IamRole.Name,
-		Namespaces: serviceAccount.Namespaces,
-		Policies:   obj.Spec.IamPolicies,
-		AccountId:  accountId,
+		RoleName:       obj.Spec.IamRole.Name,
+		ServiceAccount: serviceAccount,
+		Policies:       obj.Spec.IamPolicies,
+		AccountId:      accountId,
 	}
 	issuerMeta, err := issuer.NewS3IssuerMeta(&irsaSetup.Spec.Discovery.S3)
 	if err != nil {
 		return err
 	}
-	err = r.AwsClient.IamClient().CreateIRSARole(ctx,
+	err = r.AwsClient.IamClient().CreateIRSARole(
+		ctx,
 		issuerMeta,
 		roleManager,
 	)
