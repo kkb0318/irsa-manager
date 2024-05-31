@@ -1,0 +1,4 @@
+owner: kkb0318
+git-repo: irsa-manager
+release-name-template: "helm-{{ .Name }}-{{ .Version }}"
+make-release-latest: false
