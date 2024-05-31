@@ -6,13 +6,12 @@ toolchain go1.22.2
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.27.0
-	github.com/aws/aws-sdk-go-v2/config v1.27.15
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.15
-	github.com/aws/aws-sdk-go-v2/service/iam v1.32.3
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.54.2
-	github.com/aws/aws-sdk-go-v2/service/sts v1.28.9
+	github.com/aws/aws-sdk-go-v2/config v1.27.16
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.16
+	github.com/aws/aws-sdk-go-v2/service/iam v1.32.4
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.54.3
+	github.com/aws/aws-sdk-go-v2/service/sts v1.28.10
 	github.com/aws/smithy-go v1.20.2
-	github.com/fluxcd/pkg/apis/meta v1.5.0
 	github.com/go-jose/go-jose/v4 v4.0.2
 	github.com/onsi/ginkgo/v2 v2.17.2
 	github.com/onsi/gomega v1.33.1
@@ -20,7 +19,7 @@ require (
 	k8s.io/api v0.30.1
 	k8s.io/apimachinery v0.30.1
 	k8s.io/client-go v0.30.1
-	sigs.k8s.io/controller-runtime v0.18.2
+	sigs.k8s.io/controller-runtime v0.18.3
 )
 
 require (
@@ -41,12 +40,12 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.3.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.17.7 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.20.8 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.24.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.20.9 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.24.3 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/emicklei/go-restful/v3 v3.12.0 // indirect
+	github.com/emicklei/go-restful/v3 v3.12.1 // indirect
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
@@ -81,7 +80,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.23.0 // indirect
-	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
+	golang.org/x/exp v0.0.0-20240530194437-404ba88c7ed0 // indirect
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/oauth2 v0.20.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
