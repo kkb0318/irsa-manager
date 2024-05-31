@@ -77,25 +77,25 @@ spec:
                 secretKeyRef:
                   name: aws-secret
                   key: aws-access-key-id
-                  optional: true
+                  # optional: true
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: aws-secret
                   key: aws-secret-access-key
-                  optional: true
+                  # optional: true
             - name: AWS_REGION
               valueFrom:
                 secretKeyRef:
                   name: aws-secret
                   key: aws-region
-                  optional: true
+                  # optional: true
             - name: AWS_ROLE_ARN
               valueFrom:
                 secretKeyRef:
                   name: aws-secret
                   key: aws-role-arn
-                  optional: true
+                  # optional: true
           name: manager
           securityContext:
             allowPrivilegeEscalation: false
