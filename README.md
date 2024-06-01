@@ -1,6 +1,6 @@
-# irsa-manager
+# IRSA Manager
 
-irsa-manager allows you to easily set up IAM Roles for Service Accounts (IRSA) on non-EKS Kubernetes clusters.
+IRSA Manager allows you to easily set up IAM Roles for Service Accounts (IRSA) on non-EKS Kubernetes clusters.
 
 ## Introduction
 
@@ -23,7 +23,7 @@ Follow these steps to set up IRSA on your non-EKS cluster:
 
 Add the irsa-manager Helm repository and install irsa-manager:
 
-```
+```console
 helm repo add kkb0318 https://kkb0318.github.io/irsa-manager
 helm repo update
 helm install irsa-manager kkb0318/irsa-manager -n irsa-manager-system --create-namespace
@@ -36,7 +36,7 @@ helm install irsa-manager kkb0318/irsa-manager -n irsa-manager-system --create-n
 
 Create a secret for irsa-manager to access AWS:
 
-```
+```console
 kubectl create secret generic aws-secret -n irsa-manager-system \
   --from-literal=aws-access-key-id=<your-access-key-id> \
   --from-literal=aws-secret-access-key=<your-secret-access-key> \
@@ -49,7 +49,7 @@ kubectl create secret generic aws-secret -n irsa-manager-system \
 
 Define and apply an IRSASetup custom resource according to your needs.
 
-```
+```yaml
 apiVersion: irsa.kkb0318.github.io/v1alpha1
 kind: IRSASetup
 metadata:
@@ -68,7 +68,7 @@ spec:
 
 Execute the following commands on the control plane server to save the public and private keys for Kubernetes signatures:
 
-```
+```console
 kubectl get secret -n kube-system irsa-manager-key -o jsonpath="{.data.ssh-privatekey}" | base64 --decode | sudo tee /etc/kubernetes/pki/irsa-manager.key > /dev/null
 kubectl get secret -n kube-system irsa-manager-key -o jsonpath="{.data.ssh-publickey}" | base64 --decode | sudo tee /etc/kubernetes/pki/irsa-manager.pub > /dev/null
 ```
@@ -121,7 +121,7 @@ You can set IRSA for the Kubernetes ServiceAccount.
 
 The following example shows that irsa-manager sets the `irsa1-sa` ServiceAccount in the kube-system and default namespaces with the AmazonS3FullAccess policy:
 
-```
+```yaml
 apiVersion: irsa.kkb0318.github.io/v1alpha1
 kind: IRSA
 metadata:
@@ -147,7 +147,7 @@ For more details, please see the API Reference.
 To verify the above example and ensure the IRSA works correctly, you can check the following job.
 There is a Kubernetes job that will put one file into the S3 bucket, confirming that the Pod can assume the role to get S3 write permission:
 
-```
+```bash
 cd validation
 sh s3-echoer.sh
 ```

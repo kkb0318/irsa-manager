@@ -1,0 +1,31 @@
+{{ template "chart.header" . }}
+
+[irsa-manager](https://github.com/kkb0318/irsa-manager) IRSA manager allows you to easily set up IAM Roles for Service Accounts (IRSA) on non-EKS Kubernetes clusters.
+
+## Setup
+
+* Get Repo Info
+```console
+helm repo add kkb0318 https://kkb0318.github.io/irsa-manager
+helm repo update
+```
+
+* Install Chart
+
+```console
+helm install irsa-manager kkb0318/irsa-manager -n irsa-manager-system --create-namespace
+```
+
+* Set AWS Secret for IRSA Manager
+
+```console
+kubectl create secret generic aws-secret -n irsa-manager-system \
+  --from-literal=aws-access-key-id=<your-access-key-id> \
+  --from-literal=aws-secret-access-key=<your-secret-access-key> \
+  --from-literal=aws-region=<your-region> \
+  --from-literal=aws-role-arn=<your-role-arn>  # Optional: Set this if you want to switch roles
+
+```
+
+{{ template "chart.valuesSection" . }}
+
