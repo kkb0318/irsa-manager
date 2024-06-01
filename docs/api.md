@@ -137,9 +137,9 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `cleanup` _boolean_ | Cleanup, when enabled, allows the IRSA to perform garbage collection<br />of resources that are no longer needed or managed. |  |  |
-| `serviceAccount` _[IRSAServiceAccount](#irsaserviceaccount)_ | ServiceAccount represents the Kubernetes service account associated with the IRSA |  |  |
-| `iamRole` _[IamRole](#iamrole)_ | IamRole represents the IAM role details associated with the IRSA |  |  |
-| `iamPolicies` _string array_ | IamPolicies represents the list of IAM policies to be attached to the IAM role |  |  |
+| `serviceAccount` _[IRSAServiceAccount](#irsaserviceaccount)_ | ServiceAccount represents the Kubernetes service account associated with the IRSA. |  |  |
+| `iamRole` _[IamRole](#iamrole)_ | IamRole represents the IAM role details associated with the IRSA. |  |  |
+| `iamPolicies` _string array_ | IamPolicies represents the list of IAM policies to be attached to the IAM role.<br />You can set both the policy name (only AWS default policies) or the full ARN. |  |  |
 
 
 
@@ -157,7 +157,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `name` _string_ | Name represents the name of the IAM role |  |  |
+| `name` _string_ | Name represents the name of the IAM role. |  |  |
 
 
 #### S3Discovery

@@ -49,22 +49,23 @@ spec:
                   of resources that are no longer needed or managed.
                 type: boolean
               iamPolicies:
-                description: IamPolicies represents the list of IAM policies to be
-                  attached to the IAM role
+                description: |-
+                  IamPolicies represents the list of IAM policies to be attached to the IAM role.
+                  You can set both the policy name (only AWS default policies) or the full ARN.
                 items:
                   type: string
                 type: array
               iamRole:
                 description: IamRole represents the IAM role details associated with
-                  the IRSA
+                  the IRSA.
                 properties:
                   name:
-                    description: Name represents the name of the IAM role
+                    description: Name represents the name of the IAM role.
                     type: string
                 type: object
               serviceAccount:
                 description: ServiceAccount represents the Kubernetes service account
-                  associated with the IRSA
+                  associated with the IRSA.
                 properties:
                   name:
                     description: Name represents the name of the Kubernetes service
@@ -81,7 +82,7 @@ spec:
             - cleanup
             type: object
           status:
-            description: IRSAStatus defines the observed state of IRSA
+            description: IRSAStatus defines the observed state of IRSA.
             properties:
               conditions:
                 items:

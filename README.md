@@ -64,16 +64,23 @@ spec:
       bucketName: <S3 bucket name>
 ```
 
-4. Modify kube-apiserver Settings
+4. Check the status
 
-Execute the following commands on the control plane server to save the public and private keys for Kubernetes signatures:
+Check the IRSASetup custom resource status to verify whether it is set to true.
+
+5. Modify kube-apiserver Settings
+
+If the IRSASetup status is true, a key file (Name: `irsa-manager-key` , Namespace: `kube-system` ) will be created. This is used for signing tokens in the kubernetes API.
+Execute the following commands on the control plane server to save the public and private keys locally for Kubernetes signatures:
 
 ```console
-kubectl get secret -n kube-system irsa-manager-key -o jsonpath="{.data.ssh-privatekey}" | base64 --decode | sudo tee /etc/kubernetes/pki/irsa-manager.key > /dev/null
-kubectl get secret -n kube-system irsa-manager-key -o jsonpath="{.data.ssh-publickey}" | base64 --decode | sudo tee /etc/kubernetes/pki/irsa-manager.pub > /dev/null
+kubectl get secret -n kube-system irsa-manager-key -o jsonpath="{.data.ssh-privatekey}" | base64 --decode | sudo tee /path/to/file.key > /dev/null
+kubectl get secret -n kube-system irsa-manager-key -o jsonpath="{.data.ssh-publickey}" | base64 --decode | sudo tee /path/to/file.pub > /dev/null
 ```
 
-Then, modify the kube-apiserver.yaml file to include the following parameters:
+> [!NOTE] > `/path/to/file` can be any path you choose. If you use kubeadm, it is recommended to set `/etc/kubernetes/pki/irsa-manager.(key|pub)`
+
+Then, modify the kube-apiserver settings to include the following parameters:
 
 - API Audiences
 
@@ -89,31 +96,29 @@ Then, modify the kube-apiserver.yaml file to include the following parameters:
 
 - Service Account Key File
 
-The public key (oidc-issuer.pub) generated previously can be read by the API server. Add the path for this parameter flag:
+The public key generated previously can be read by the API server. Add the path for this parameter flag:
 
 ```
---service-account-key-file=/etc/kubernetes/pki/irsa-manager.pub
+--service-account-key-file=/path/to/file.pub
 ```
 
 > [!NOTE]
 > Add this setting as the first element. If specified multiple times, tokens signed by any of the specified keys are considered valid by the Kubernetes API server.
+> If you do not mount /path/to directory, you need to add the volumes field to this path.
 
 - Service Account Signing Key File
 
 The private key (oidc-issuer.key) generated previously can be read by the API server. Add the path for this parameter flag:
 
 ```
---service-account-signing-key-file=/etc/kubernetes/pki/irsa-manager.key
+--service-account-signing-key-file=/path/to/file.key
 ```
 
 > [!NOTE]
 > Overwrite the existing settings.
+> If you dont mount /path/to/file, you have to add the volumes field in this path
 
 For more details, refer to the [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#serviceaccount-token-volume-projection).
-
-5. Check the status
-
-Check the IRSASetup custom resource status. If the status is true, you are ready to use IRSA.
 
 ## How To Use
 

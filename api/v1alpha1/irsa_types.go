@@ -32,11 +32,18 @@ type IRSASpec struct {
 	// of resources that are no longer needed or managed.
 	// +required
 	Cleanup bool `json:"cleanup"`
-	// ServiceAccount represents the Kubernetes service account associated with the IRSA
+
+	// ServiceAccount represents the Kubernetes service account associated with the IRSA.
+	// +required
 	ServiceAccount IRSAServiceAccount `json:"serviceAccount,omitempty"`
-	// IamRole represents the IAM role details associated with the IRSA
+
+	// IamRole represents the IAM role details associated with the IRSA.
+	// +required
 	IamRole IamRole `json:"iamRole,omitempty"`
-	// IamPolicies represents the list of IAM policies to be attached to the IAM role
+
+	// IamPolicies represents the list of IAM policies to be attached to the IAM role.
+	// You can set both the policy name (only AWS default policies) or the full ARN.
+	// +required
 	IamPolicies []string `json:"iamPolicies,omitempty"`
 }
 
@@ -50,16 +57,16 @@ type IRSAServiceAccount struct {
 
 // IamRole represents the IAM role configuration
 type IamRole struct {
-	// Name represents the name of the IAM role
+	// Name represents the name of the IAM role.
 	Name string `json:"name,omitempty"`
 }
 
-// IRSAStatus defines the observed state of IRSA
+// IRSAStatus defines the observed state of IRSA.
 type IRSAStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
-// GetIRSAStatusConditions returns a pointer to the Status.Conditions slice
+// GetIRSAStatusConditions returns a pointer to the Conditions slice
 func (in *IRSA) GetIRSAStatusConditions() *[]metav1.Condition {
 	return &in.Status.Conditions
 }
