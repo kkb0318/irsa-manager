@@ -14,6 +14,7 @@ Before you begin, ensure you have the following:
 - A running Kubernetes cluster (non-EKS).
 - Helm installed on your local machine.
 - AWS user credentials with appropriate permissions.
+  - The permissions should allow irsa-manager to call the necessary AWS APIs. You can find all the APIs that irsa-manager calls in the internal/aws/aws.go interfaces.
 
 ## Setup
 
@@ -64,8 +65,6 @@ spec:
       bucketName: <S3 bucket name>
 ```
 
-4. Check the status
-
 Check the IRSASetup custom resource status to verify whether it is set to true.
 
 5. Modify kube-apiserver Settings
@@ -78,7 +77,9 @@ kubectl get secret -n kube-system irsa-manager-key -o jsonpath="{.data.ssh-priva
 kubectl get secret -n kube-system irsa-manager-key -o jsonpath="{.data.ssh-publickey}" | base64 --decode | sudo tee /path/to/file.pub > /dev/null
 ```
 
-> [!NOTE] > `/path/to/file` can be any path you choose. If you use kubeadm, it is recommended to set `/etc/kubernetes/pki/irsa-manager.(key|pub)`
+> [!NOTE]
+> Path: `/path/to/file` can be any path you choose.
+> If you use kubeadm, it is recommended to set `/etc/kubernetes/pki/irsa-manager.(key|pub)`
 
 Then, modify the kube-apiserver settings to include the following parameters:
 
@@ -116,7 +117,7 @@ The private key (oidc-issuer.key) generated previously can be read by the API se
 
 > [!NOTE]
 > Overwrite the existing settings.
-> If you dont mount /path/to/file, you have to add the volumes field in this path
+> If you do not mount /path/to directory, you need to add the volumes field to this path.
 
 For more details, refer to the [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#serviceaccount-token-volume-projection).
 
