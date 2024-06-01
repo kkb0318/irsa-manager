@@ -14,22 +14,6 @@ Package v1alpha1 contains API Schema definitions for the irsa v1alpha1 API group
 
 
 
-#### Auth
-
-
-
-Auth holds the authentication configuration details.
-
-
-
-_Appears in:_
-- [IRSASetupSpec](#irsasetupspec)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `secretRef` _[SecretRef](#secretref)_ | SecretRef specifies the reference to the Kubernetes secret containing authentication details. |  |  |
-
-
 #### Discovery
 
 
@@ -118,7 +102,6 @@ _Appears in:_
 | `cleanup` _boolean_ | Cleanup, when enabled, allows the IRSASetup to perform garbage collection<br />of resources that are no longer needed or managed. |  |  |
 | `mode` _string_ | Mode specifies the mode of operation. Can be either "selfhosted" or "eks". |  |  |
 | `discovery` _[Discovery](#discovery)_ | Discovery configures the IdP Discovery process, essential for setting up IRSA by locating<br />the OIDC provider information. |  |  |
-| `auth` _[Auth](#auth)_ | Auth contains authentication configuration details. |  |  |
 
 
 
@@ -175,23 +158,6 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `region` _string_ | Region denotes the AWS region where the S3 bucket is located. |  |  |
 | `bucketName` _string_ | BucketName is the name of the S3 bucket that hosts the OIDC discovery information. |  |  |
-
-
-#### SecretRef
-
-
-
-SecretRef contains the reference to a Kubernetes secret.
-
-
-
-_Appears in:_
-- [Auth](#auth)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `name` _string_ | Name specifies the name of the secret. |  |  |
-| `namespace` _string_ | Namespace specifies the namespace of the secret. |  |  |
 
 
 

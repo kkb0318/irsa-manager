@@ -44,25 +44,6 @@ spec:
           spec:
             description: IRSASetupSpec defines the desired state of IRSASetup
             properties:
-              auth:
-                description: Auth contains authentication configuration details.
-                properties:
-                  secretRef:
-                    description: SecretRef specifies the reference to the Kubernetes
-                      secret containing authentication details.
-                    properties:
-                      name:
-                        description: Name specifies the name of the secret.
-                        type: string
-                      namespace:
-                        description: Namespace specifies the namespace of the secret.
-                        type: string
-                    required:
-                    - name
-                    type: object
-                required:
-                - secretRef
-                type: object
               cleanup:
                 description: |-
                   Cleanup, when enabled, allows the IRSASetup to perform garbage collection

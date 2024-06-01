@@ -39,9 +39,6 @@ type IRSASetupSpec struct {
 	// Discovery configures the IdP Discovery process, essential for setting up IRSA by locating
 	// the OIDC provider information.
 	Discovery Discovery `json:"discovery"`
-
-	// Auth contains authentication configuration details.
-	Auth Auth `json:"auth,omitempty"`
 }
 
 // Discovery holds the configuration for IdP Discovery, which is crucial for locating
@@ -58,21 +55,6 @@ type S3Discovery struct {
 
 	// BucketName is the name of the S3 bucket that hosts the OIDC discovery information.
 	BucketName string `json:"bucketName"`
-}
-
-// Auth holds the authentication configuration details.
-type Auth struct {
-	// SecretRef specifies the reference to the Kubernetes secret containing authentication details.
-	SecretRef SecretRef `json:"secretRef"`
-}
-
-// SecretRef contains the reference to a Kubernetes secret.
-type SecretRef struct {
-	// Name specifies the name of the secret.
-	Name string `json:"name"`
-
-	// Namespace specifies the namespace of the secret.
-	Namespace string `json:"namespace,omitempty"`
 }
 
 // IRSASetupStatus defines the observed state of IRSASetup

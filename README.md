@@ -67,7 +67,10 @@ spec:
 
 Check the IRSASetup custom resource status to verify whether it is set to true.
 
-5. Modify kube-apiserver Settings
+> [!NOTE]
+> Please ensure that only one IRSASetup resource is created.
+
+4. Modify kube-apiserver Settings
 
 If the IRSASetup status is true, a key file (Name: `irsa-manager-key` , Namespace: `kube-system` ) will be created. This is used for signing tokens in the kubernetes API.
 Execute the following commands on the control plane server to save the public and private keys locally for Kubernetes signatures:
