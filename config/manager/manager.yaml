@@ -70,7 +70,7 @@ spec:
             - /manager
           args:
             - --leader-elect
-          image: controller:latest
+          image: ghcr.io/kkb0318/irsa-manager:APP_VERSION
           env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:

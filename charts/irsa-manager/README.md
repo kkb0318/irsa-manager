@@ -48,8 +48,8 @@ kubectl create secret generic aws-secret -n irsa-manager-system \
 | controllerManager.manager.args[2] | string | `"--leader-elect"` |  |
 | controllerManager.manager.containerSecurityContext.allowPrivilegeEscalation | bool | `false` |  |
 | controllerManager.manager.containerSecurityContext.capabilities.drop[0] | string | `"ALL"` |  |
-| controllerManager.manager.image.repository | string | `"controller"` |  |
-| controllerManager.manager.image.tag | string | `"latest"` |  |
+| controllerManager.manager.image.repository | string | `"ghcr.io/kkb0318/irsa-manager"` |  |
+| controllerManager.manager.image.tag | string | `"APP_VERSION"` |  |
 | controllerManager.manager.resources.limits.cpu | string | `"500m"` |  |
 | controllerManager.manager.resources.limits.memory | string | `"128Mi"` |  |
 | controllerManager.manager.resources.requests.cpu | string | `"10m"` |  |
