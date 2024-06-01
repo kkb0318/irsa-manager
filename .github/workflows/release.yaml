@@ -65,9 +65,9 @@ jobs:
         uses: azure/setup-helm@v3
       - name: sed
         run: |
-          sed -i "s/CHART_VERSION/${{ github.ref_name }}/" charts/kom/Chart.yaml
-          sed -i "s/APP_VERSION/${{ github.ref_name }}/" charts/kom/Chart.yaml
-          sed -i "s/APP_VERSION/${{ github.ref_name }}/" charts/kom/values.yaml
+          sed -i "s/CHART_VERSION/${{ github.ref_name }}/" charts/irsa-manager/Chart.yaml
+          sed -i "s/APP_VERSION/${{ github.ref_name }}/" charts/irsa-manager/Chart.yaml
+          sed -i "s/APP_VERSION/${{ github.ref_name }}/" charts/irsa-manager/values.yaml
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.6.0
         with:
