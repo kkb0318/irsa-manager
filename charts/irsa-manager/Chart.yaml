@@ -1,6 +1,6 @@
 apiVersion: v2
 name: irsa-manager
-description: A Helm chart for Kubernetes
+description: IRSA for non-EKS cluster
 # A chart can be either an 'application' or a 'library' chart.
 #
 # Application charts are a collection of templates that can be packaged into versioned archives
@@ -13,9 +13,24 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.1.0
+version: CHART_VERSION
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "0.1.0"
+appVersion: APP_VERSION
+
+keywords:
+  - kubernetes
+  - irsa
+  - operator-manager
+  - operator
+  - controller
+home: https://github.com/kkb0318/irsa-manager
+sources:
+  - https://github.com/kkb0318/irsa-manager
+maintainers:
+  - name: kkb
+    email: nkkb0318@gmail.com
+annotations:
+  artifacthub.io/prerelease: "false"
