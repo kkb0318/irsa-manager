@@ -11,21 +11,21 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: irsasetup-editor-role
 rules:
-- apiGroups:
-  - irsa.kkb0318.github.io
-  resources:
-  - irsasetups
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - irsa.kkb0318.github.io
-  resources:
-  - irsasetups/status
-  verbs:
-  - get
+  - apiGroups:
+      - irsa-manager.kkb0318.github.io
+    resources:
+      - irsasetups
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - irsa-manager.kkb0318.github.io
+    resources:
+      - irsasetups/status
+    verbs:
+      - get

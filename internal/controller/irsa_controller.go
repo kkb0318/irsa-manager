@@ -42,10 +42,10 @@ type IRSAReconciler struct {
 	AwsClient awsclient.AwsClient
 }
 
-//+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsas,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsas/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsas/finalizers,verbs=update
-//+kubebuilder:rbac:groups=irsa.kkb0318.github.io,resources=irsasetups,verbs=get;list
+//+kubebuilder:rbac:groups=irsa-manager.kkb0318.github.io,resources=irsas,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=irsa-manager.kkb0318.github.io,resources=irsas/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=irsa-manager.kkb0318.github.io,resources=irsas/finalizers,verbs=update
+//+kubebuilder:rbac:groups=irsa-manager.kkb0318.github.io,resources=irsasetups,verbs=get;list
 //+kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to

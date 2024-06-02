@@ -1,10 +1,10 @@
 # API Reference
 
 ## Packages
-- [irsa.kkb0318.github.io/v1alpha1](#irsakkb0318githubiov1alpha1)
+- [irsa-manager.kkb0318.github.io/v1alpha1](#irsa-managerkkb0318githubiov1alpha1)
 
 
-## irsa.kkb0318.github.io/v1alpha1
+## irsa-manager.kkb0318.github.io/v1alpha1
 
 Package v1alpha1 contains API Schema definitions for the irsa v1alpha1 API group
 
@@ -43,7 +43,7 @@ IRSA is the Schema for the irsas API
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `apiVersion` _string_ | `irsa.kkb0318.github.io/v1alpha1` | | |
+| `apiVersion` _string_ | `irsa-manager.kkb0318.github.io/v1alpha1` | | |
 | `kind` _string_ | `IRSA` | | |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
 | `spec` _[IRSASpec](#irsaspec)_ |  |  |  |
@@ -80,7 +80,7 @@ IRSASetup represents a configuration for setting up IAM Roles for Service Accoun
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `apiVersion` _string_ | `irsa.kkb0318.github.io/v1alpha1` | | |
+| `apiVersion` _string_ | `irsa-manager.kkb0318.github.io/v1alpha1` | | |
 | `kind` _string_ | `IRSASetup` | | |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
 | `spec` _[IRSASetupSpec](#irsasetupspec)_ |  |  |  |

@@ -11,17 +11,17 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: irsasetup-viewer-role
 rules:
-- apiGroups:
-  - irsa.kkb0318.github.io
-  resources:
-  - irsasetups
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - irsa.kkb0318.github.io
-  resources:
-  - irsasetups/status
-  verbs:
-  - get
+  - apiGroups:
+      - irsa-manager.kkb0318.github.io
+    resources:
+      - irsasetups
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - irsa-manager.kkb0318.github.io
+    resources:
+      - irsasetups/status
+    verbs:
+      - get

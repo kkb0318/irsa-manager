@@ -2,8 +2,8 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/irsa.kkb0318.github.io_irsasetups.yaml
-- bases/irsa.kkb0318.github.io_irsas.yaml
+  - bases/irsa-manager.kkb0318.github.io_irsasetups.yaml
+  - bases/irsa-manager.kkb0318.github.io_irsas.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patches:

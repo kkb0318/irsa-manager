@@ -6,7 +6,7 @@ metadata:
   {{- include "irsa-manager.labels" . | nindent 4 }}
 rules:
 - apiGroups:
-  - irsa.kkb0318.github.io
+  - irsa-manager.kkb0318.github.io
   resources:
   - irsasetups
   verbs:
@@ -18,13 +18,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - irsa.kkb0318.github.io
+  - irsa-manager.kkb0318.github.io
   resources:
   - irsasetups/finalizers
   verbs:
   - update
 - apiGroups:
-  - irsa.kkb0318.github.io
+  - irsa-manager.kkb0318.github.io
   resources:
   - irsasetups/status
   verbs:

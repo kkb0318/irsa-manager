@@ -55,7 +55,7 @@ kubectl create secret generic aws-secret -n irsa-manager-system \
 Define and apply an IRSASetup custom resource according to your needs.
 
 ```yaml
-apiVersion: irsa.kkb0318.github.io/v1alpha1
+apiVersion: irsa-manager.kkb0318.github.io/v1alpha1
 kind: IRSASetup
 metadata:
   name: irsa-init
@@ -135,7 +135,7 @@ You can set IRSA for the Kubernetes ServiceAccount.
 The following example shows that irsa-manager sets the `irsa1-sa` ServiceAccount in the kube-system and default namespaces with the AmazonS3FullAccess policy:
 
 ```yaml
-apiVersion: irsa.kkb0318.github.io/v1alpha1
+apiVersion: irsa-manager.kkb0318.github.io/v1alpha1
 kind: IRSA
 metadata:
   name: irsa-sample
