@@ -102,6 +102,10 @@ Then, modify the kube-apiserver settings to include the following parameters:
 --service-account-issuer=https://s3-<region>.amazonaws.com/<S3 bucket name>
 ```
 
+> [!NOTE]
+> Add this setting as the first element.
+> When this flag is specified multiple times, the first is used to generate tokens and all are used to determine which issuers are accepted.
+
 - Service Account Key File
 
 The public key generated previously can be read by the API server. Add the path for this parameter flag:
@@ -111,7 +115,6 @@ The public key generated previously can be read by the API server. Add the path 
 ```
 
 > [!NOTE]
-> Add this setting as the first element. If specified multiple times, tokens signed by any of the specified keys are considered valid by the Kubernetes API server.
 > If you do not mount /path/to directory, you need to add the volumes field to this path.
 
 - Service Account Signing Key File
