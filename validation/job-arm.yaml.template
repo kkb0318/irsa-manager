@@ -5,7 +5,7 @@ metadata:
 spec:
   template:
     spec:
-      serviceAccountName: s3-echoer
+      serviceAccountName: irsa1-sa
       containers:
         - name: main
           image: amazonlinux:2023
