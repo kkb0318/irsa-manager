@@ -42,6 +42,26 @@ spec:
         command:
         - /manager
         env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              key: aws-access-key-id
+              name: aws-secret
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              key: aws-secret-access-key
+              name: aws-secret
+        - name: AWS_REGION
+          valueFrom:
+            secretKeyRef:
+              key: aws-region
+              name: aws-secret
+        - name: AWS_ROLE_ARN
+          valueFrom:
+            secretKeyRef:
+              key: aws-role-arn
+              name: aws-secret
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
         image: {{ .Values.controllerManager.manager.image.repository }}:{{ .Values.controllerManager.manager.image.tag
