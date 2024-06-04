@@ -20,6 +20,29 @@ Before you begin, ensure you have the following:
 - AWS user credentials with appropriate permissions.
   - The permissions should allow irsa-manager to call the necessary AWS APIs. You can find all the APIs that irsa-manager calls in the internal/aws/aws.go interfaces.
 
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateOpenIDConnectProvider",
+        "iam:DeleteOpenIDConnectProvider",
+        "iam:CreateRole",
+        "iam:UpdateAssumeRolePolicy",
+        "iam:AttachRolePolicy",
+        "iam:DeleteRole",
+        "iam:DetachRolePolicy",
+        "sts:GetCallerIdentity",
+        "s3:*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
 ## Setup
 
 Follow these steps to set up IRSA on your non-EKS cluster:
@@ -51,6 +74,8 @@ kubectl create secret generic aws-secret -n irsa-manager-system \
 ```
 
 3. Create an IRSASetup Custom Resource
+
+![](docs/IRSASetup-cr.png)
 
 Define and apply an IRSASetup custom resource according to your needs.
 
@@ -133,9 +158,14 @@ For more details, refer to the [Kubernetes documentation](https://kubernetes.io/
 
 ## How To Use
 
-You can set IRSA for the Kubernetes ServiceAccount.
+You can set up IRSA for any Kubernetes ServiceAccount by configuring the necessary IAM roles and policies.
+While you can use the provided IRSA custom resources, it is also possible to set up IRSA manually by configuring the `iamRole`, `iamPolicies`, and `ServiceAccount` directly.
 
-The following example shows that irsa-manager sets the `irsa1-sa` ServiceAccount in the kube-system and default namespaces with the AmazonS3FullAccess policy:
+### Using IRSA Custom Resources
+
+![](docs/IRSA-cr.png)
+
+The following example shows how irsa-manager sets up the `irsa1-sa` ServiceAccount in the `kube-system` and `default` namespaces with the AmazonS3FullAccess policy using IRSA custom resources:
 
 ```yaml
 apiVersion: irsa-manager.kkb0318.github.io/v1alpha1
@@ -156,7 +186,49 @@ spec:
     - AmazonS3FullAccess
 ```
 
-For more details, please see the API Reference.
+This configuration simplifies the setup process by combining the creation of the IAM role, policies, and service account into a single custom resource.
+
+### Manual setup
+
+Alternatively, you can configure IRSA manually without using the IRSA custom resources by following these steps:
+
+- Create the IAM Role:
+  - Manually create an IAM role in AWS with the necessary trust policy to allow the Kubernetes service account to assume the role.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::<account-id>:oidc-provider/s3-<region>.amazonaws.com/<S3 bucket name>"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "s3-<region>.amazonaws.com/<S3 bucket name>:sub": "system:serviceaccount:<namespace>:<name>"
+        }
+      }
+    }
+  ]
+}
+```
+
+- Attach IAM Policies:
+  - Attach the required IAM policies (e.g., AmazonS3FullAccess) to the IAM role.
+- Annotate the Kubernetes ServiceAccount:
+  - Annotate the Kubernetes service account with the ARN of the IAM role.
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: <name>
+  namespace: <namespace>
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::<account-id>:role/<role name>
+```
 
 ## Verification
 
