@@ -89,7 +89,6 @@ metadata:
   namespace: irsa-manager-system
 spec:
   cleanup: false
-  mode: selfhosted
   discovery:
     s3:
       region: <region>
