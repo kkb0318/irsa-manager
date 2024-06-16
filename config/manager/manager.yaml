@@ -95,7 +95,7 @@ spec:
                 secretKeyRef:
                   name: aws-secret
                   key: aws-role-arn
-                  # optional: true
+                  optional: true
           name: manager
           securityContext:
             allowPrivilegeEscalation: false

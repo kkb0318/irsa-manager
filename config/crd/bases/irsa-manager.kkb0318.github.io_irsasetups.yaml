@@ -72,13 +72,15 @@ spec:
                     type: object
                 type: object
               mode:
-                description: Mode specifies the mode of operation. Can be either "selfhosted"
-                  or "eks".
+                description: |-
+                  Mode (Optional, Future Feature) Defines how the controller will operate once this feature is enabled.
+                  Currently unused. Planned values:
+                    - "selfhosted": For self-managed Kubernetes clusters.
+                    - "eks": For Amazon EKS environments.
                 type: string
             required:
             - cleanup
             - discovery
-            - mode
             type: object
           status:
             description: IRSASetupStatus defines the observed state of IRSASetup

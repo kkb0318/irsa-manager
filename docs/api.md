@@ -100,7 +100,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `cleanup` _boolean_ | Cleanup, when enabled, allows the IRSASetup to perform garbage collection<br />of resources that are no longer needed or managed. |  |  |
-| `mode` _string_ | Mode specifies the mode of operation. Can be either "selfhosted" or "eks". |  |  |
+| `mode` _string_ | Mode (Optional, Future Feature) Defines how the controller will operate once this feature is enabled.<br />Currently unused. Planned values:<br />  - "selfhosted": For self-managed Kubernetes clusters.<br />  - "eks": For Amazon EKS environments. |  |  |
 | `discovery` _[Discovery](#discovery)_ | Discovery configures the IdP Discovery process, essential for setting up IRSA by locating<br />the OIDC provider information. |  |  |
 
 

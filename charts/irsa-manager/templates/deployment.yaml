@@ -62,6 +62,7 @@ spec:
             secretKeyRef:
               key: aws-role-arn
               name: aws-secret
+              optional: true
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ quote .Values.kubernetesClusterDomain }}
         image: {{ .Values.controllerManager.manager.image.repository }}:{{ .Values.controllerManager.manager.image.tag

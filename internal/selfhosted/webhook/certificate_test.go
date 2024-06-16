@@ -19,21 +19,25 @@ func TestCreateTlsCredentials(t *testing.T) {
 	}
 
 	certBlock, _ := pem.Decode(creds.certificate)
+	var cert *x509.Certificate
 	if certBlock == nil {
 		t.Fatal("Failed to decode PEM block containing the certificate")
+	} else {
+		cert, err = x509.ParseCertificate(certBlock.Bytes)
+		if err != nil {
+			t.Fatalf("Failed to parse certificate: %v", err)
+		}
 	}
-	cert, err := x509.ParseCertificate(certBlock.Bytes)
-	if err != nil {
-		t.Fatalf("Failed to parse certificate: %v", err)
-	}
-
+	var key *rsa.PrivateKey
 	keyBlock, _ := pem.Decode(creds.privateKey)
 	if keyBlock == nil {
 		t.Fatal("Failed to decode PEM block containing the private key")
-	}
-	key, err := x509.ParsePKCS1PrivateKey(keyBlock.Bytes)
-	if err != nil {
-		t.Fatalf("Failed to parse private key: %v", err)
+	} else {
+		key, err = x509.ParsePKCS1PrivateKey(keyBlock.Bytes)
+		if err != nil {
+			t.Fatalf("Failed to parse private key: %v", err)
+		}
+
 	}
 
 	// Verify public keys are equivalent

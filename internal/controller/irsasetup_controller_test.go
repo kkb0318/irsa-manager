@@ -53,7 +53,7 @@ var _ = Describe("IRSASetup Controller", func() {
 					},
 					Spec: irsav1alpha1.IRSASetupSpec{
 						Cleanup: true,
-						Mode:    "selfhosted",
+						// Mode:    "selfhosted",
 						Discovery: irsav1alpha1.Discovery{
 							S3: irsav1alpha1.S3Discovery{
 								Region:     "ap-northeast-1",
@@ -134,7 +134,7 @@ var _ = Describe("IRSASetup Controller", func() {
 					},
 					Spec: irsav1alpha1.IRSASetupSpec{
 						Cleanup: true,
-						Mode:    "selfhoted",
+						// Mode:    "selfhoted",
 						Discovery: irsav1alpha1.Discovery{
 							S3: irsav1alpha1.S3Discovery{
 								Region:     "ap-northeast-1",
@@ -219,7 +219,7 @@ var _ = Describe("IRSASetup Controller", func() {
 					},
 					Spec: irsav1alpha1.IRSASetupSpec{
 						Cleanup: false,
-						Mode:    "selfhoted",
+						// Mode:    "selfhoted",
 						Discovery: irsav1alpha1.Discovery{
 							S3: irsav1alpha1.S3Discovery{
 								Region:     "ap-northeast-1",
