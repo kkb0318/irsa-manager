@@ -49,20 +49,7 @@ Before you begin, ensure you have the following:
 
 Follow these steps to set up IRSA on your non-EKS cluster:
 
-1. install helm
-
-Add the irsa-manager Helm repository and install irsa-manager:
-
-```console
-helm repo add kkb0318 https://kkb0318.github.io/irsa-manager
-helm repo update
-helm install irsa-manager kkb0318/irsa-manager -n irsa-manager-system --create-namespace
-```
-
-> [!NOTE]
-> You may encounter an error during the deployment. Proceed with the following steps and create the "aws-secret" secret to eliminate the error.
-
-2. Set AWS Secret for IRSA Manager
+1. Set AWS Secret for IRSA Manager
 
 Create a secret for irsa-manager to access AWS:
 
@@ -73,6 +60,16 @@ kubectl create secret generic aws-secret -n irsa-manager-system \
   --from-literal=aws-region=<your-region> \
   --from-literal=aws-role-arn=<your-role-arn>  # Optional: Set this if you want to switch roles
 
+```
+
+2. install helm
+
+Add the irsa-manager Helm repository and install irsa-manager:
+
+```console
+helm repo add kkb0318 https://kkb0318.github.io/irsa-manager
+helm repo update
+helm install irsa-manager kkb0318/irsa-manager -n irsa-manager-system --create-namespace
 ```
 
 3. Create an IRSASetup Custom Resource
