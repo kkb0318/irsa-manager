@@ -31,21 +31,7 @@ kubectl create secret generic aws-secret -n irsa-manager-system \
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| controllerManager.kubeRbacProxy.args[0] | string | `"--secure-listen-address=0.0.0.0:8443"` |  |
-| controllerManager.kubeRbacProxy.args[1] | string | `"--upstream=http://127.0.0.1:8080/"` |  |
-| controllerManager.kubeRbacProxy.args[2] | string | `"--logtostderr=true"` |  |
-| controllerManager.kubeRbacProxy.args[3] | string | `"--v=0"` |  |
-| controllerManager.kubeRbacProxy.containerSecurityContext.allowPrivilegeEscalation | bool | `false` |  |
-| controllerManager.kubeRbacProxy.containerSecurityContext.capabilities.drop[0] | string | `"ALL"` |  |
-| controllerManager.kubeRbacProxy.image.repository | string | `"gcr.io/kubebuilder/kube-rbac-proxy"` |  |
-| controllerManager.kubeRbacProxy.image.tag | string | `"v0.15.0"` |  |
-| controllerManager.kubeRbacProxy.resources.limits.cpu | string | `"500m"` |  |
-| controllerManager.kubeRbacProxy.resources.limits.memory | string | `"128Mi"` |  |
-| controllerManager.kubeRbacProxy.resources.requests.cpu | string | `"5m"` |  |
-| controllerManager.kubeRbacProxy.resources.requests.memory | string | `"64Mi"` |  |
-| controllerManager.manager.args[0] | string | `"--health-probe-bind-address=:8081"` |  |
-| controllerManager.manager.args[1] | string | `"--metrics-bind-address=127.0.0.1:8080"` |  |
-| controllerManager.manager.args[2] | string | `"--leader-elect"` |  |
+| controllerManager.manager.args[0] | string | `"--leader-elect"` |  |
 | controllerManager.manager.containerSecurityContext.allowPrivilegeEscalation | bool | `false` |  |
 | controllerManager.manager.containerSecurityContext.capabilities.drop[0] | string | `"ALL"` |  |
 | controllerManager.manager.image.repository | string | `"ghcr.io/kkb0318/irsa-manager"` |  |

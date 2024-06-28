@@ -13,7 +13,7 @@ IRSA Manager allows you to easily set up IAM Roles for Service Accounts (IRSA) o
 IRSA (IAM Roles for Service Accounts) allows Kubernetes service accounts to assume AWS IAM roles.
 This is particularly useful for providing Kubernetes workloads with the necessary AWS permissions in a secure manner.
 
-For detailed guidelines on how irsa-manager works, please refer to the [**blog post**](https://medium.com/@kkb0318/simplify-aws-irsa-for-self-hosted-kubernetes-with-irsa-manager-c2fb2ecf88c5) post.
+For detailed guidelines on how irsa-manager works, please refer to the [**blog post**](https://medium.com/@kkb0318/simplify-aws-irsa-for-self-hosted-kubernetes-with-irsa-manager-c2fb2ecf88c5).
 
 ## Prerequisites
 
