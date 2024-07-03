@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
+	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/smithy-go"
 	irsav1alpha1 "github.com/kkb0318/irsa-manager/api/v1alpha1"
 	"github.com/kkb0318/irsa-manager/internal/issuer"
@@ -29,12 +30,40 @@ type RoleManager struct {
 	AccountId string
 }
 
+// PolicyArn returns the full ARN of a given policy name. If the policy name already has the full ARN, it returns it as is.
 func (r *RoleManager) PolicyArn(policy string) *string {
 	prefix := "arn:aws:iam::"
 	if strings.HasPrefix(policy, prefix) {
 		return aws.String(policy)
 	}
 	return aws.String(fmt.Sprintf("%saws:policy/%s", prefix, policy))
+}
+
+// ExtractNewPolicies returns the names of the policies that are in the current settings (r.Policies) but are not yet attached to the role.
+
+func (r *RoleManager) ExtractNewPolicies(l *iam.ListAttachedRolePoliciesOutput) []string {
+	result := []string{}
+	for _, p := range r.Policies {
+		if slices.ContainsFunc(l.AttachedPolicies, func(a types.AttachedPolicy) bool {
+			return *r.PolicyArn(p) != *a.PolicyArn
+		}) {
+			result = append(result, p)
+		}
+	}
+	return result
+}
+
+// ExtractStalePolicies returns the ARNs of the policies that are attached to the role but are not in the current settings (r.Policies).
+func (r *RoleManager) ExtractStalePolicies(l *iam.ListAttachedRolePoliciesOutput) []string {
+	result := []string{}
+	for _, ap := range l.AttachedPolicies {
+		if slices.ContainsFunc(r.Policies, func(p string) bool {
+			return *r.PolicyArn(p) != *ap.PolicyArn
+		}) {
+			result = append(result, *ap.PolicyArn)
+		}
+	}
+	return result
 }
 
 // DeleteIRSARole detaches specified policies from the IAM role and deletes the IAM role
@@ -93,7 +122,7 @@ func (a *AwsIamClient) CreateIRSARole(ctx context.Context, issuerMeta issuer.OID
 		AssumeRolePolicyDocument: aws.String(string(trustPolicyJSON)),
 	}
 
-	_, err = a.Client.CreateRole(context.TODO(), createRoleInput)
+	_, err = a.Client.CreateRole(ctx, createRoleInput)
 	if errorHandler(err, []string{"EntityAlreadyExists"}) != nil {
 		return err
 	}
@@ -104,11 +133,16 @@ func (a *AwsIamClient) CreateIRSARole(ctx context.Context, issuerMeta issuer.OID
 		PolicyDocument: aws.String(string(trustPolicyJSON)),
 	}
 
-	_, err = a.Client.UpdateAssumeRolePolicy(context.TODO(), updateRoleInput)
+	_, err = a.Client.UpdateAssumeRolePolicy(ctx, updateRoleInput)
 	if err != nil {
 		return fmt.Errorf("failed to update assume role policy for role %s: %w", r.RoleName, err)
 	}
 	log.Printf("Assume role policy for %s updated successfully", r.RoleName)
+	// TODO:
+	// listPoliciesOutput, err := a.Client.ListAttachedRolePolicies(ctx, &iam.ListAttachedRolePoliciesInput{RoleName: aws.String(r.RoleName)})
+	// if err != nil {
+	// 	return fmt.Errorf("failed to list attached role policies with %s: %w", r.RoleName, err)
+	// }
 
 	for _, policy := range r.Policies {
 		attachRolePolicyInput := &iam.AttachRolePolicyInput{
@@ -116,7 +150,7 @@ func (a *AwsIamClient) CreateIRSARole(ctx context.Context, issuerMeta issuer.OID
 			PolicyArn: r.PolicyArn(policy),
 		}
 
-		_, err = a.Client.AttachRolePolicy(context.TODO(), attachRolePolicyInput)
+		_, err = a.Client.AttachRolePolicy(ctx, attachRolePolicyInput)
 		if err != nil {
 			return err
 		}
