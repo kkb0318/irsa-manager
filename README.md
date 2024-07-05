@@ -38,6 +38,7 @@ Before you begin, ensure you have the following:
         "iam:AttachRolePolicy",
         "iam:DeleteRole",
         "iam:DetachRolePolicy",
+        "iam:ListAttachedRolePolicies",
         "sts:GetCallerIdentity",
         "s3:*"
       ],
