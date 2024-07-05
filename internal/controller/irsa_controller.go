@@ -184,7 +184,7 @@ func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, 
 		Policies:       obj.Spec.IamPolicies,
 		AccountId:      accountId,
 	}
-	err = r.AwsClient.IamClient().CreateIRSARole(
+	err = r.AwsClient.IamClient().UpdateIRSARole(
 		ctx,
 		issuerMeta,
 		roleManager,

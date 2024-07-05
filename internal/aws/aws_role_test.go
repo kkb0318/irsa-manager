@@ -66,14 +66,15 @@ func TestExtractStalePolicies(t *testing.T) {
 	}{
 		{
 			"StalePolicyExists",
-			[]string{"ReadOnlyAccess"},
+			[]string{"ReadOnlyAccess", "AdministratorAccess"},
 			&iam.ListAttachedRolePoliciesOutput{
 				AttachedPolicies: []types.AttachedPolicy{
 					{PolicyArn: aws.String("arn:aws:iam::aws:policy/ReadOnlyAccess")},
 					{PolicyArn: aws.String("arn:aws:iam::aws:policy/AdministratorAccess")},
+					{PolicyArn: aws.String("arn:aws:iam::aws:policy/PowerUserAccess")},
 				},
 			},
-			[]string{"arn:aws:iam::aws:policy/AdministratorAccess"},
+			[]string{"arn:aws:iam::aws:policy/PowerUserAccess"},
 		},
 		{
 			"MultipleStalePoliciesExist",

@@ -347,13 +347,14 @@ func (m *mockAwsClient) StsClient() *awsclient.AwsStsClient {
 
 type (
 	mockAwsIamAPI struct {
-		createOidcErr               error
-		deleteOidcErr               error
-		createRoleErr               error
-		deleteRoleErr               error
-		updateAssumeRolePolicyError error
-		attachRolePolicyError       error
-		detachRolePolicyError       error
+		createOidcErr                 error
+		deleteOidcErr                 error
+		createRoleErr                 error
+		deleteRoleErr                 error
+		updateAssumeRolePolicyError   error
+		listAttachedRolePoliciesError error
+		attachRolePolicyError         error
+		detachRolePolicyError         error
 	}
 	mockAwsS3API struct {
 		createBucketErr bool
@@ -372,6 +373,10 @@ func (m *mockAwsIamAPI) DeleteOpenIDConnectProvider(ctx context.Context, params 
 
 func (m *mockAwsIamAPI) CreateRole(ctx context.Context, params *iam.CreateRoleInput, optFns ...func(*iam.Options)) (*iam.CreateRoleOutput, error) {
 	return nil, m.createRoleErr
+}
+
+func (m *mockAwsIamAPI) ListAttachedRolePolicies(ctx context.Context, params *iam.ListAttachedRolePoliciesInput, optFns ...func(*iam.Options)) (*iam.ListAttachedRolePoliciesOutput, error) {
+	return nil, m.listAttachedRolePoliciesError
 }
 
 func (m *mockAwsIamAPI) UpdateAssumeRolePolicy(ctx context.Context, params *iam.UpdateAssumeRolePolicyInput, optFns ...func(*iam.Options)) (*iam.UpdateAssumeRolePolicyOutput, error) {
