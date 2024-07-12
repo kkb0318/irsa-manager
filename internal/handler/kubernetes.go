@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -39,24 +40,28 @@ func (k *KubernetesHandler) CreateAll(ctx context.Context) error {
 	return nil
 }
 
-func (k *KubernetesHandler) ApplyAll(ctx context.Context) error {
+func (k *KubernetesHandler) ApplyAll(ctx context.Context) ([]types.NamespacedName, error) {
+	applied := []types.NamespacedName{}
 	for _, obj := range k.objs {
 		err := k.client.Apply(ctx, obj)
 		if err != nil {
-			return err
+			return applied, err
 		}
+		applied = append(applied, client.ObjectKeyFromObject(obj))
 	}
-	return nil
+	return applied, nil
 }
 
-func (k *KubernetesHandler) DeleteAll(ctx context.Context) error {
+func (k *KubernetesHandler) DeleteAll(ctx context.Context) ([]types.NamespacedName, error) {
+	deleted := []types.NamespacedName{}
 	for _, obj := range k.objs {
 		err := k.client.Delete(ctx, obj, DeleteOptions{
 			DeletionPropagation: metav1.DeletePropagationBackground,
 		})
 		if err != nil {
-			return err
+			return deleted, err
 		}
+		deleted = append(deleted, client.ObjectKeyFromObject(obj))
 	}
-	return nil
+	return deleted, nil
 }

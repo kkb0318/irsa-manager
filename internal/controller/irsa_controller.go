@@ -25,6 +25,7 @@ import (
 	"github.com/kkb0318/irsa-manager/internal/issuer"
 	"github.com/kkb0318/irsa-manager/internal/kubernetes"
 	"github.com/kkb0318/irsa-manager/internal/manifests"
+	"github.com/kkb0318/irsa-manager/internal/utils"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -118,8 +119,6 @@ func (r *IRSAReconciler) reconcileDelete(ctx context.Context, obj *irsav1alpha1.
 	if !obj.Spec.Cleanup {
 		return nil
 	}
-	serviceAccount := obj.Spec.ServiceAccount
-	kubeHandler := handler.NewKubernetesHandler(kubeClient)
 	roleManager := awsclient.RoleManager{
 		RoleName: obj.Spec.IamRole.Name,
 		Policies: obj.Spec.IamPolicies,
@@ -131,15 +130,8 @@ func (r *IRSAReconciler) reconcileDelete(ctx context.Context, obj *irsav1alpha1.
 	if err != nil {
 		return err
 	}
-	for _, ns := range serviceAccount.Namespaces {
-		sa := manifests.NewServiceAccountBuilder().Build(types.NamespacedName{
-			Name:      serviceAccount.Name,
-			Namespace: ns,
-		})
-		kubeHandler.Append(sa)
-
-	}
-	err = kubeHandler.DeleteAll(ctx)
+	deleted, err := cleanupKubernetesResources(ctx, kubeClient, obj.Spec.ServiceAccount.NamespacedNameList())
+	*obj = irsav1alpha1.IRSAStatusSetServiceAccount(*obj, deleted)
 	if err != nil {
 		return err
 	}
@@ -196,22 +188,44 @@ func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, 
 	}
 
 	kubeHandler := handler.NewKubernetesHandler(kubeClient)
-
-	for _, ns := range serviceAccount.Namespaces {
-		sa := manifests.NewServiceAccountBuilder().WithIRSAAnnotation(roleManager).Build(types.NamespacedName{
-			Name:      serviceAccount.Name,
-			Namespace: ns,
-		})
+	for _, namespacedName := range serviceAccount.NamespacedNameList() {
+		sa := manifests.NewServiceAccountBuilder().WithIRSAAnnotation(roleManager).Build(namespacedName)
 		kubeHandler.Append(sa)
 	}
-	err = kubeHandler.ApplyAll(ctx)
+	applied, err := kubeHandler.ApplyAll(ctx)
+	*obj = irsav1alpha1.IRSAStatusSetServiceAccount(*obj, applied)
 	if err != nil {
 		e = err
 		reason = irsav1alpha1.IRSAReasonFailedK8sApply
 		return err
 	}
+
+	deleted, err := cleanupKubernetesResources(
+		ctx,
+		kubeClient,
+		utils.DiffNamespacedNames(obj.Status.ServiceNamespacedNameList(), serviceAccount.NamespacedNameList()),
+	)
+	*obj = irsav1alpha1.IRSAStatusSetServiceAccount(*obj, deleted)
+	if err != nil {
+		e = err
+		reason = irsav1alpha1.IRSAReasonFailedK8sCleanUp
+		return err
+	}
 	*obj = irsav1alpha1.IRSAStatusReady(*obj, string(irsav1alpha1.IRSAReasonReady), "successfully setup resources")
 	return nil
+}
+
+func cleanupKubernetesResources(ctx context.Context, client *kubernetes.KubernetesClient, nsNames []types.NamespacedName) ([]types.NamespacedName, error) {
+	kubeHandler := handler.NewKubernetesHandler(client)
+	for _, namespacedName := range nsNames {
+		sa := manifests.NewServiceAccountBuilder().Build(namespacedName)
+		kubeHandler.Append(sa)
+	}
+	deleted, err := kubeHandler.DeleteAll(ctx)
+	if err != nil {
+		return deleted, err
+	}
+	return deleted, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

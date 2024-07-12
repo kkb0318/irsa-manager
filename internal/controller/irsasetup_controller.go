@@ -150,7 +150,7 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 	for _, r := range webhookSetup.Resources() {
 		kubeHandler.Append(r)
 	}
-	err = kubeHandler.DeleteAll(ctx)
+	_, err = kubeHandler.DeleteAll(ctx)
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 		return err
 	}
 	if forceUpdate {
-		err = kubeHandlerForOidc.ApplyAll(ctx)
+		_, err = kubeHandlerForOidc.ApplyAll(ctx)
 	} else {
 		err = kubeHandlerForOidc.CreateAll(ctx)
 	}
@@ -247,7 +247,7 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 	for _, r := range webhookSetup.Resources() {
 		kubeHandlerForWebhook.Append(r)
 	}
-	err = kubeHandlerForWebhook.ApplyAll(ctx)
+	_, err = kubeHandlerForWebhook.ApplyAll(ctx)
 	if err != nil {
 		e = err
 		reason = irsav1alpha1.SelfHostedReasonFailedWebhook

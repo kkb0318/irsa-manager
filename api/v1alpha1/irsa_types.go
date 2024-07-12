@@ -17,8 +17,11 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"slices"
+
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -55,6 +58,18 @@ type IRSAServiceAccount struct {
 	Namespaces []string `json:"namespaces,omitempty"`
 }
 
+// NamespacedNameList returns a slice of types.NamespacedName constructed from the Name and Namespace settings.
+func (sa *IRSAServiceAccount) NamespacedNameList() []types.NamespacedName {
+	namespacedName := make([]types.NamespacedName, len(sa.Namespaces))
+	for i, ns := range sa.Namespaces {
+		namespacedName[i] = types.NamespacedName{
+			Name:      sa.Name,
+			Namespace: ns,
+		}
+	}
+	return namespacedName
+}
+
 // IamRole represents the IAM role configuration
 type IamRole struct {
 	// Name represents the name of the IAM role.
@@ -64,6 +79,60 @@ type IamRole struct {
 // IRSAStatus defines the observed state of IRSA.
 type IRSAStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	// Inventory of applied service resources
+	ServiceAccounts StatusServiceAccountList `json:"serviceAccounts,omitempty"`
+}
+
+type StatusServiceAccountList []IRSANamespacedNameWithTags
+
+func (s *StatusServiceAccountList) IsExist(nsNames types.NamespacedName) bool {
+	return slices.ContainsFunc(*s, func(sa IRSANamespacedNameWithTags) bool {
+		return sa.Name == nsNames.Name && sa.Name == nsNames.Namespace
+	})
+}
+
+// Append adds a new IRSANamespacedNameWithTags to the StatusServiceAccountList.
+// If the provided NamespacedName already exists in the list, it will be ignored.
+func (s *StatusServiceAccountList) Append(nsNames types.NamespacedName) {
+	*s = append(*s, IRSANamespacedNameWithTags{
+		Name:      nsNames.Name,
+		Namespace: nsNames.Namespace,
+	},
+	)
+}
+
+// Delete removes an IRSANamespacedNameWithTags from the StatusServiceAccountList
+// that matches the provided NamespacedName. If the provided NamespacedName does
+// not exist in the list, the method does nothing.
+func (s *StatusServiceAccountList) Delete(nsNames types.NamespacedName) {
+	index := slices.IndexFunc(*s, func(sa IRSANamespacedNameWithTags) bool {
+		return sa.Name == nsNames.Name && sa.Namespace == nsNames.Namespace
+	})
+	if index != -1 {
+		*s = slices.Delete(*s, index, index+1)
+	}
+}
+
+// IRSANamespacedNameWithTags is like a types.NamespacedName with JSON tags
+type IRSANamespacedNameWithTags struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+func (s *IRSAStatus) ServiceNamespacedNameList() []types.NamespacedName {
+	namespacedNameList := make([]types.NamespacedName, len(s.ServiceAccounts))
+	for i, n := range s.ServiceAccounts {
+		namespacedNameList[i] = types.NamespacedName{
+			Name:      n.Name,
+			Namespace: n.Namespace,
+		}
+	}
+	return namespacedNameList
+}
+
+// GetIRSAStatusServiceAccounts returns a pointer to the ServiceAccount slice
+func (in *IRSA) GetIRSAStatusServiceAccounts() *StatusServiceAccountList {
+	return &in.Status.ServiceAccounts
 }
 
 // GetIRSAStatusConditions returns a pointer to the Conditions slice
@@ -93,11 +162,38 @@ func IRSAStatusNotReady(irsa IRSA, reason, message string) IRSA {
 	return irsa
 }
 
+func IRSAStatusSetServiceAccount(irsa IRSA, namespacedNames []types.NamespacedName) IRSA {
+	for _, namespacedName := range namespacedNames {
+		setStatusServiceAccounts(irsa.GetIRSAStatusServiceAccounts(), namespacedName)
+	}
+	return irsa
+}
+
+func IRSAStatusRemoveServiceAccount(irsa IRSA, namespacedNames []types.NamespacedName) IRSA {
+	for _, namespacedName := range namespacedNames {
+		removeStatusServiceAccounts(irsa.GetIRSAStatusServiceAccounts(), namespacedName)
+	}
+	return irsa
+}
+
+func setStatusServiceAccounts(s *StatusServiceAccountList, namespacedName types.NamespacedName) {
+	if !s.IsExist(namespacedName) {
+		s.Append(namespacedName)
+	}
+}
+
+func removeStatusServiceAccounts(s *StatusServiceAccountList, namespacedName types.NamespacedName) {
+	if s.IsExist(namespacedName) {
+		s.Append(namespacedName)
+	}
+}
+
 type IRSAReason string
 
 const (
 	IRSAReasonFailedRoleUpdate IRSAReason = "IRSAFailedRoleUpdate"
 	IRSAReasonFailedK8sApply   IRSAReason = "IRSAFailedApplyingResources"
+	IRSAReasonFailedK8sCleanUp IRSAReason = "IRSAFailedDeletingResources"
 	IRSAReasonReady            IRSAReason = "IRSAReady"
 )
 

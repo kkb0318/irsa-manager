@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -80,10 +81,6 @@ var _ = Describe("IRSA Controller", func() {
 						NamespacedName: typeNamespacedName,
 					})
 					Expect(err).NotTo(HaveOccurred())
-					_, err = r.Reconcile(ctx, reconcile.Request{
-						NamespacedName: typeNamespacedName,
-					})
-					Expect(err).NotTo(HaveOccurred())
 					for _, expect := range expected {
 						checkExist(expect)
 					}
@@ -101,7 +98,7 @@ var _ = Describe("IRSA Controller", func() {
 				},
 			},
 			{
-				name: "error",
+				name: "AWS API Error Case",
 				obj: &irsav1alpha1.IRSA{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-resource2",
@@ -156,6 +153,75 @@ var _ = Describe("IRSA Controller", func() {
 					for _, expect := range expected {
 						checkExist(expect)
 					}
+					By("removing the custom resource for the Kind")
+					Eventually(func() error {
+						return k8sClient.Delete(ctx, obj)
+					}, timeout).Should(Succeed())
+					_, err = r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).To(Not(HaveOccurred()))
+					for _, expect := range expected {
+						checkNoExist(expect)
+					}
+				},
+			},
+			{
+				name: "should update serviceaccount successfully",
+				obj: &irsav1alpha1.IRSA{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-resource3",
+						Namespace: "default",
+					},
+					Spec: irsav1alpha1.IRSASpec{
+						Cleanup: true,
+						ServiceAccount: irsav1alpha1.IRSAServiceAccount{
+							Name: "sa-3",
+							Namespaces: []string{
+								"kube-system",
+							},
+						},
+					},
+				},
+				irsaSetupObj: newMockIRSASetup(),
+				f: func(r *IRSAReconciler, obj *irsav1alpha1.IRSA) {
+					expected := []expectedResource{
+						{
+							NamespacedName: types.NamespacedName{Name: "sa-3", Namespace: "kube-system"},
+							f:              newServiceAccount,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "sa-3", Namespace: "default"},
+							f:              newServiceAccount,
+						},
+					}
+
+					By("Reconciling the created resource")
+					typeNamespacedName := types.NamespacedName{
+						Name:      obj.Name,
+						Namespace: obj.Namespace,
+					}
+					_, err := r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).NotTo(HaveOccurred())
+					checkExist(
+						expectedResource{
+							NamespacedName: types.NamespacedName{Name: "sa-3", Namespace: "kube-system"},
+							f:              newServiceAccount,
+						},
+					)
+					f := createCallBack(ctx, r, typeNamespacedName, obj)
+
+					By("Add Namespace 'default'")
+					f(obj.Spec.ServiceAccount.Name, []string{"default", "kube-system"})
+					By("Remove Namespace 'kube-system'")
+					f(obj.Spec.ServiceAccount.Name, []string{"default"})
+					checkNoExist(expectedResource{
+						NamespacedName: types.NamespacedName{Name: "sa-3", Namespace: "kube-system"},
+						f:              newServiceAccount,
+					})
+
 					By("removing the custom resource for the Kind")
 					Eventually(func() error {
 						return k8sClient.Delete(ctx, obj)
@@ -229,5 +295,33 @@ func newMockIRSASetup() *irsav1alpha1.IRSASetup {
 				},
 			},
 		},
+	}
+}
+
+func createCallBack(ctx context.Context, r *IRSAReconciler, typeNamespacedName types.NamespacedName, obj *irsav1alpha1.IRSA) func(name string, namespaces []string) {
+	return func(name string, namespaces []string) {
+		fixNamespacesAndReconcile(ctx, r, typeNamespacedName, obj, name, namespaces)
+	}
+}
+
+func fixNamespacesAndReconcile(ctx context.Context, r *IRSAReconciler, typeNamespacedName types.NamespacedName, obj *irsav1alpha1.IRSA, name string, namespaces []string) {
+	Expect(k8sClient.Get(ctx, typeNamespacedName, obj)).NotTo(HaveOccurred())
+	Eventually(func() error {
+		obj.Spec.ServiceAccount.Namespaces = namespaces
+		return k8sClient.Update(ctx, obj)
+	}, timeout).Should(Succeed())
+	_, err := r.Reconcile(ctx, reconcile.Request{
+		NamespacedName: typeNamespacedName,
+	})
+	Expect(err).NotTo(HaveOccurred())
+	expected := []expectedResource{}
+	for _, ns := range namespaces {
+		expected = append(expected, expectedResource{
+			NamespacedName: types.NamespacedName{Name: name, Namespace: ns},
+			f:              newServiceAccount,
+		})
+	}
+	for _, e := range expected {
+		checkExist(e)
 	}
 }
