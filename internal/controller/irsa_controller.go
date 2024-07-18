@@ -205,7 +205,7 @@ func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, 
 		kubeClient,
 		utils.DiffNamespacedNames(obj.Status.ServiceNamespacedNameList(), serviceAccount.NamespacedNameList()),
 	)
-	*obj = irsav1alpha1.IRSAStatusSetServiceAccount(*obj, deleted)
+	*obj = irsav1alpha1.IRSAStatusRemoveServiceAccount(*obj, deleted)
 	if err != nil {
 		e = err
 		reason = irsav1alpha1.IRSAReasonFailedK8sCleanUp

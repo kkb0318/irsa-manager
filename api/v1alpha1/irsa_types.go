@@ -184,7 +184,7 @@ func setStatusServiceAccounts(s *StatusServiceAccountList, namespacedName types.
 
 func removeStatusServiceAccounts(s *StatusServiceAccountList, namespacedName types.NamespacedName) {
 	if s.IsExist(namespacedName) {
-		s.Append(namespacedName)
+		s.Delete(namespacedName)
 	}
 }
 
