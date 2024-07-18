@@ -87,7 +87,7 @@ type StatusServiceAccountList []IRSANamespacedNameWithTags
 
 func (s *StatusServiceAccountList) IsExist(nsNames types.NamespacedName) bool {
 	return slices.ContainsFunc(*s, func(sa IRSANamespacedNameWithTags) bool {
-		return sa.Name == nsNames.Name && sa.Name == nsNames.Namespace
+		return sa.Name == nsNames.Name && sa.Namespace == nsNames.Namespace
 	})
 }
 
