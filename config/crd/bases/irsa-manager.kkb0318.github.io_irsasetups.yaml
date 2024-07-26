@@ -53,6 +53,7 @@ spec:
                 description: |-
                   Discovery configures the IdP Discovery process, essential for setting up IRSA by locating
                   the OIDC provider information.
+                  Only applicable when Mode is "selfhosted".
                 properties:
                   s3:
                     description: S3 specifies the AWS S3 bucket details where the
@@ -73,10 +74,19 @@ spec:
                 type: object
               mode:
                 description: |-
-                  Mode (Optional, Future Feature) Defines how the controller will operate once this feature is enabled.
-                  Currently unused. Planned values:
+                  Mode specifies the operation mode of the controller.
+                  Possible values:
                     - "selfhosted": For self-managed Kubernetes clusters.
                     - "eks": For Amazon EKS environments.
+                  Default: "selfhosted"
+                enum:
+                - selfhosted
+                - eks
+                type: string
+              provider:
+                description: |-
+                  IamOIDCProvider configures IAM OIDC IamOIDCProvider Name
+                  Only applicable when Mode is "eks".
                 type: string
             required:
             - cleanup

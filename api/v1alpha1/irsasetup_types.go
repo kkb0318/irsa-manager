@@ -33,16 +33,31 @@ type IRSASetupSpec struct {
 	// +required
 	Cleanup bool `json:"cleanup"`
 
-	// Mode (Optional, Future Feature) Defines how the controller will operate once this feature is enabled.
-	// Currently unused. Planned values:
+	// Mode specifies the operation mode of the controller.
+	// Possible values:
 	//   - "selfhosted": For self-managed Kubernetes clusters.
 	//   - "eks": For Amazon EKS environments.
-	Mode string `json:"mode,omitempty"`
+	// Default: "selfhosted"
+	Mode SetupMode `json:"mode,omitempty"`
 
 	// Discovery configures the IdP Discovery process, essential for setting up IRSA by locating
 	// the OIDC provider information.
+	// Only applicable when Mode is "selfhosted".
 	Discovery Discovery `json:"discovery"`
+
+	// IamOIDCProvider configures IAM OIDC IamOIDCProvider Name
+	// Only applicable when Mode is "eks".
+	IamOIDCProvider string `json:"provider,omitempty"`
 }
+
+// +kubebuilder:default=selfhosted
+// +kubebuilder:validation:Enum=selfhosted;eks
+type SetupMode string
+
+const (
+	ModeSelfhosted = SetupMode("selfhosted")
+	ModeEks        = SetupMode("eks")
+)
 
 // Discovery holds the configuration for IdP Discovery, which is crucial for locating
 // the OIDC provider in a self-hosted environment.
