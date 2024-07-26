@@ -288,6 +288,42 @@ var _ = Describe("IRSASetup Controller", func() {
 					}
 				},
 			},
+			{
+				name: "EKS mode",
+				obj: &irsav1alpha1.IRSASetup{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-resource-eks1",
+						Namespace: "default",
+					},
+					Spec: irsav1alpha1.IRSASetupSpec{
+						Cleanup:         false,
+						Mode:            irsav1alpha1.ModeEks,
+						IamOIDCProvider: "oidc.example",
+					},
+				},
+				f: func(r *IRSASetupReconciler, obj *irsav1alpha1.IRSASetup) {
+					typeNamespacedName := types.NamespacedName{
+						Name:      obj.Name,
+						Namespace: obj.Namespace,
+					}
+					_, err := r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).NotTo(HaveOccurred())
+					_, err = r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).To(Not(HaveOccurred()))
+					By("removing the custom resource (not cleanup)")
+					Eventually(func() error {
+						return k8sClient.Delete(ctx, obj)
+					}, timeout).Should(Succeed())
+					_, err = r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).To(Not(HaveOccurred()))
+				},
+			},
 		}
 		for _, tt := range tests {
 			It(tt.name, func() {

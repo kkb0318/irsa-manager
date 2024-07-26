@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -97,7 +98,11 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}()
 
 	if !obj.DeletionTimestamp.IsZero() {
-		err = r.reconcileDelete(ctx, obj, kubeClient)
+		if obj.Spec.Mode == irsav1alpha1.ModeEks {
+			err = r.reconcileDeleteEks()
+		} else {
+			err = r.reconcileDeleteSelfhosted(ctx, obj, kubeClient)
+		}
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -118,11 +123,18 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 
 func (r *IRSASetupReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSASetup, kubeClient *kubernetes.KubernetesClient) error {
+	if obj.Spec.Mode == irsav1alpha1.ModeEks {
+		return reconcileEks(obj)
+	}
 	err := reconcileSelfhosted(ctx, obj, r.AwsClient, kubeClient)
 	return err
 }
 
-func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1alpha1.IRSASetup, kubeClient *kubernetes.KubernetesClient) error {
+func (r *IRSASetupReconciler) reconcileDeleteEks() error {
+	return nil
+}
+
+func (r *IRSASetupReconciler) reconcileDeleteSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, kubeClient *kubernetes.KubernetesClient) error {
 	if !obj.Spec.Cleanup {
 		return nil
 	}
@@ -147,7 +159,7 @@ func (r *IRSASetupReconciler) reconcileDelete(ctx context.Context, obj *irsav1al
 	if err != nil {
 		return err
 	}
-	issuerMeta, err := issuer.NewS3IssuerMeta(&obj.Spec.Discovery.S3)
+	issuerMeta, err := issuer.NewOIDCIssuerMeta(obj)
 	if err != nil {
 		return err
 	}
@@ -210,7 +222,7 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 		string(irsav1alpha1.SelfHostedReasonFailedKeys),
 		string(irsav1alpha1.SelfHostedReasonFailedOidc),
 	)
-	issuerMeta, err := issuer.NewS3IssuerMeta(&obj.Spec.Discovery.S3)
+	issuerMeta, err := issuer.NewOIDCIssuerMeta(obj)
 	if err != nil {
 		return err
 	}
@@ -248,6 +260,14 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 	}
 	*obj = irsav1alpha1.SetupSelfHostedStatusReady(*obj, string(irsav1alpha1.SelfHostedReasonReady), "successfully setup resources for self-hosted")
 	log.Info("the self-hosted resources have successfully set up")
+	return nil
+}
+
+// reconcileEks ensures the required IAM OIDC Provider is set for EKS mode.
+func reconcileEks(obj *irsav1alpha1.IRSASetup) error {
+	if obj.Spec.IamOIDCProvider == "" {
+		return fmt.Errorf("IamOIDCProvider parameter must be set when Mode is 'eks'")
+	}
 	return nil
 }
 
