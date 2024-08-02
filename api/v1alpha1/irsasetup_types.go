@@ -52,6 +52,7 @@ type IRSASetupSpec struct {
 
 // +kubebuilder:default=selfhosted
 // +kubebuilder:validation:Enum=selfhosted;eks
+// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Value is immutable"
 type SetupMode string
 
 const (

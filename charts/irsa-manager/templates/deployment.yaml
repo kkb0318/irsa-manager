@@ -71,5 +71,7 @@ spec:
           | nindent 10 }}
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ include "irsa-manager.fullname" . }}-controller-manager
       terminationGracePeriodSeconds: 10

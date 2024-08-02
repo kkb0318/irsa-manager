@@ -82,6 +82,9 @@ spec:
                 - selfhosted
                 - eks
                 type: string
+                x-kubernetes-validations:
+                - message: Value is immutable
+                  rule: self == oldSelf
               provider:
                 description: |-
                   IamOIDCProvider configures IAM OIDC IamOIDCProvider Name
