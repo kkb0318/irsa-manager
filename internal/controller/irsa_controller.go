@@ -51,13 +51,6 @@ type IRSAReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the IRSA object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.3/pkg/reconcile
 func (r *IRSAReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := ctrllog.FromContext(ctx)
 	obj := &irsav1alpha1.IRSA{}
@@ -152,7 +145,7 @@ func (r *IRSAReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSA, 
 		return fmt.Errorf("error converting to IRSASetup for %s: %v", list.Items[0].GetName(), err)
 	}
 	serviceAccount := obj.Spec.ServiceAccount
-	issuerMeta, err := issuer.NewS3IssuerMeta(&irsaSetup.Spec.Discovery.S3)
+	issuerMeta, err := issuer.NewOIDCIssuerMeta(irsaSetup)
 	if err != nil {
 		return err
 	}

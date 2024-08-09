@@ -15,8 +15,8 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.selfHostedSetup[?(@.type=="Ready")].status
-      name: SelfHostedReady
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
       type: string
     name: v1alpha1
     schema:
@@ -53,6 +53,7 @@ spec:
                 description: |-
                   Discovery configures the IdP Discovery process, essential for setting up IRSA by locating
                   the OIDC provider information.
+                  Only applicable when Mode is "selfhosted".
                 properties:
                   s3:
                     description: S3 specifies the AWS S3 bucket details where the
@@ -71,21 +72,32 @@ spec:
                     - region
                     type: object
                 type: object
+              iamOIDCProvider:
+                description: |-
+                  IamOIDCProvider configures IAM OIDC IamOIDCProvider Name
+                  Only applicable when Mode is "eks".
+                type: string
               mode:
                 description: |-
-                  Mode (Optional, Future Feature) Defines how the controller will operate once this feature is enabled.
-                  Currently unused. Planned values:
+                  Mode specifies the operation mode of the controller.
+                  Possible values:
                     - "selfhosted": For self-managed Kubernetes clusters.
                     - "eks": For Amazon EKS environments.
+                  Default: "selfhosted"
+                enum:
+                - selfhosted
+                - eks
                 type: string
+                x-kubernetes-validations:
+                - message: Value is immutable
+                  rule: self == oldSelf
             required:
             - cleanup
-            - discovery
             type: object
           status:
             description: IRSASetupStatus defines the observed state of IRSASetup
             properties:
-              selfHostedSetup:
+              conditions:
                 items:
                   description: "Condition contains details for one aspect of the current
                     state of this API Resource.\n---\nThis struct is intended for

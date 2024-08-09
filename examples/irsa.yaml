@@ -6,11 +6,11 @@ metadata:
 spec:
   cleanup: true
   serviceAccount:
-    name: irsa1-sa
+    name: irsa111-sa
     namespaces:
       - kube-system
       - default
   iamRole:
-    name: irsa1-role
+    name: irsa111-role
   iamPolicies:
     - AmazonS3FullAccess

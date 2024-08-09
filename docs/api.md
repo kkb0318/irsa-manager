@@ -31,6 +31,8 @@ _Appears in:_
 | `s3` _[S3Discovery](#s3discovery)_ | S3 specifies the AWS S3 bucket details where the OIDC provider's discovery information is hosted. |  |  |
 
 
+
+
 #### IRSA
 
 
@@ -102,8 +104,9 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `cleanup` _boolean_ | Cleanup, when enabled, allows the IRSASetup to perform garbage collection<br />of resources that are no longer needed or managed. |  |  |
-| `mode` _string_ | Mode (Optional, Future Feature) Defines how the controller will operate once this feature is enabled.<br />Currently unused. Planned values:<br />  - "selfhosted": For self-managed Kubernetes clusters.<br />  - "eks": For Amazon EKS environments. |  |  |
-| `discovery` _[Discovery](#discovery)_ | Discovery configures the IdP Discovery process, essential for setting up IRSA by locating<br />the OIDC provider information. |  |  |
+| `mode` _[SetupMode](#setupmode)_ | Mode specifies the operation mode of the controller.<br />Possible values:<br />  - "selfhosted": For self-managed Kubernetes clusters.<br />  - "eks": For Amazon EKS environments.<br />Default: "selfhosted" |  | Enum: [selfhosted eks] <br /> |
+| `discovery` _[Discovery](#discovery)_ | Discovery configures the IdP Discovery process, essential for setting up IRSA by locating<br />the OIDC provider information.<br />Only applicable when Mode is "selfhosted". |  |  |
+| `iamOIDCProvider` _string_ | IamOIDCProvider configures IAM OIDC IamOIDCProvider Name<br />Only applicable when Mode is "eks". |  |  |
 
 
 
@@ -161,6 +164,20 @@ _Appears in:_
 | `region` _string_ | Region denotes the AWS region where the S3 bucket is located. |  |  |
 | `bucketName` _string_ | BucketName is the name of the S3 bucket that hosts the OIDC discovery information. |  |  |
 
+
+
+
+#### SetupMode
+
+_Underlying type:_ _string_
+
+
+
+_Validation:_
+- Enum: [selfhosted eks]
+
+_Appears in:_
+- [IRSASetupSpec](#irsasetupspec)
 
 
 

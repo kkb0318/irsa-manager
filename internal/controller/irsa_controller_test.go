@@ -211,7 +211,7 @@ var _ = Describe("IRSA Controller", func() {
 							f:              newServiceAccount,
 						},
 					)
-					f := createCallBack(ctx, r, typeNamespacedName, obj)
+					f := createCallBackForFixingNamespace(ctx, r, typeNamespacedName, obj)
 
 					By("Add Namespace 'default'")
 					f(obj.Spec.ServiceAccount.Name, []string{"default", "kube-system"})
@@ -219,6 +219,75 @@ var _ = Describe("IRSA Controller", func() {
 					f(obj.Spec.ServiceAccount.Name, []string{"default"})
 					checkNoExist(expectedResource{
 						NamespacedName: types.NamespacedName{Name: "sa-3", Namespace: "kube-system"},
+						f:              newServiceAccount,
+					})
+
+					By("removing the custom resource for the Kind")
+					Eventually(func() error {
+						return k8sClient.Delete(ctx, obj)
+					}, timeout).Should(Succeed())
+					_, err = r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).To(Not(HaveOccurred()))
+					for _, expect := range expected {
+						checkNoExist(expect)
+					}
+				},
+			},
+			{
+				name: "should update serviceaccount successfully with EKS mode",
+				obj: &irsav1alpha1.IRSA{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-resource-eks-1",
+						Namespace: "default",
+					},
+					Spec: irsav1alpha1.IRSASpec{
+						Cleanup: true,
+						ServiceAccount: irsav1alpha1.IRSAServiceAccount{
+							Name: "sa-eks-1",
+							Namespaces: []string{
+								"kube-system",
+							},
+						},
+					},
+				},
+				irsaSetupObj: newMockIRSASetupForEKS(),
+				f: func(r *IRSAReconciler, obj *irsav1alpha1.IRSA) {
+					expected := []expectedResource{
+						{
+							NamespacedName: types.NamespacedName{Name: "sa-eks-1", Namespace: "kube-system"},
+							f:              newServiceAccount,
+						},
+						{
+							NamespacedName: types.NamespacedName{Name: "sa-eks-1", Namespace: "default"},
+							f:              newServiceAccount,
+						},
+					}
+
+					By("Reconciling the created resource")
+					typeNamespacedName := types.NamespacedName{
+						Name:      obj.Name,
+						Namespace: obj.Namespace,
+					}
+					_, err := r.Reconcile(ctx, reconcile.Request{
+						NamespacedName: typeNamespacedName,
+					})
+					Expect(err).NotTo(HaveOccurred())
+					checkExist(
+						expectedResource{
+							NamespacedName: types.NamespacedName{Name: "sa-eks-1", Namespace: "kube-system"},
+							f:              newServiceAccount,
+						},
+					)
+					f := createCallBackForFixingNamespace(ctx, r, typeNamespacedName, obj)
+
+					By("Add Namespace 'default'")
+					f(obj.Spec.ServiceAccount.Name, []string{"default", "kube-system"})
+					By("Remove Namespace 'kube-system'")
+					f(obj.Spec.ServiceAccount.Name, []string{"default"})
+					checkNoExist(expectedResource{
+						NamespacedName: types.NamespacedName{Name: "sa-eks-1", Namespace: "kube-system"},
 						f:              newServiceAccount,
 					})
 
@@ -298,7 +367,20 @@ func newMockIRSASetup() *irsav1alpha1.IRSASetup {
 	}
 }
 
-func createCallBack(ctx context.Context, r *IRSAReconciler, typeNamespacedName types.NamespacedName, obj *irsav1alpha1.IRSA) func(name string, namespaces []string) {
+func newMockIRSASetupForEKS() *irsav1alpha1.IRSASetup {
+	return &irsav1alpha1.IRSASetup{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test",
+			Namespace: "default",
+		},
+		Spec: irsav1alpha1.IRSASetupSpec{
+			Mode:            irsav1alpha1.ModeEks,
+			IamOIDCProvider: "oidc.example",
+		},
+	}
+}
+
+func createCallBackForFixingNamespace(ctx context.Context, r *IRSAReconciler, typeNamespacedName types.NamespacedName, obj *irsav1alpha1.IRSA) func(name string, namespaces []string) {
 	return func(name string, namespaces []string) {
 		fixNamespacesAndReconcile(ctx, r, typeNamespacedName, obj, name, namespaces)
 	}
