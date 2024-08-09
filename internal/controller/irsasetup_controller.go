@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -28,6 +27,7 @@ import (
 
 	irsav1alpha1 "github.com/kkb0318/irsa-manager/api/v1alpha1"
 	awsclient "github.com/kkb0318/irsa-manager/internal/aws"
+	"github.com/kkb0318/irsa-manager/internal/eks"
 	"github.com/kkb0318/irsa-manager/internal/handler"
 	"github.com/kkb0318/irsa-manager/internal/issuer"
 	"github.com/kkb0318/irsa-manager/internal/kubernetes"
@@ -124,10 +124,9 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 func (r *IRSASetupReconciler) reconcile(ctx context.Context, obj *irsav1alpha1.IRSASetup, kubeClient *kubernetes.KubernetesClient) error {
 	if obj.Spec.Mode == irsav1alpha1.ModeEks {
-		return reconcileEks(obj)
+		return reconcileEks(ctx, obj)
 	}
-	err := reconcileSelfhosted(ctx, obj, r.AwsClient, kubeClient)
-	return err
+	return reconcileSelfhosted(ctx, obj, r.AwsClient, kubeClient)
 }
 
 func (r *IRSASetupReconciler) reconcileDeleteEks() error {
@@ -177,7 +176,7 @@ func (r *IRSASetupReconciler) reconcileDeleteSelfhosted(ctx context.Context, obj
 // - The function enforces a 'force update' strategy in case of failures related to kubernetes Secrets creation or OIDC setup. This means it starts from scratch to ensure all components are correctly configured.
 func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsClient awsclient.AwsClient, kubeClient *kubernetes.KubernetesClient) error {
 	log := ctrllog.FromContext(ctx)
-	if irsav1alpha1.IsSelfHostedReadyConditionTrue(*obj) {
+	if irsav1alpha1.IsReadyConditionTrue(*obj) {
 		// Selfhosted Setup have already succeeded
 		log.Info("the self-hosted resources have already set up")
 		return nil
@@ -210,20 +209,22 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 
 	// e is set only when an error occurs in an external dependency process and is reflected in the CRs status
 	var e error
-	var reason irsav1alpha1.SelfHostedReason
+	var reason irsav1alpha1.SelfhostedConditionReason
 	defer func() {
 		if e != nil {
-			*obj = irsav1alpha1.SelfHostedStatusNotReady(*obj, string(reason), e.Error())
+			*obj = irsav1alpha1.StatusNotReady(*obj, string(reason), e.Error())
 		}
 	}()
 
 	forceUpdate := irsav1alpha1.HasConditionReason(
-		irsav1alpha1.SelfHostedReadyStatus(*obj),
+		irsav1alpha1.ReadyStatus(*obj),
 		string(irsav1alpha1.SelfHostedReasonFailedKeys),
 		string(irsav1alpha1.SelfHostedReasonFailedOidc),
 	)
 	issuerMeta, err := issuer.NewOIDCIssuerMeta(obj)
 	if err != nil {
+		e = err
+		reason = irsav1alpha1.SelfHostedReasonFailedIssuer
 		return err
 	}
 	err = selfhosted.Execute(
@@ -258,16 +259,31 @@ func reconcileSelfhosted(ctx context.Context, obj *irsav1alpha1.IRSASetup, awsCl
 		reason = irsav1alpha1.SelfHostedReasonFailedWebhook
 		return err
 	}
-	*obj = irsav1alpha1.SetupSelfHostedStatusReady(*obj, string(irsav1alpha1.SelfHostedReasonReady), "successfully setup resources for self-hosted")
+	*obj = irsav1alpha1.SetupStatusReady(*obj, string(irsav1alpha1.SelfHostedReasonReady), "successfully setup resources for self-hosted")
 	log.Info("the self-hosted resources have successfully set up")
 	return nil
 }
 
-// reconcileEks ensures the required IAM OIDC Provider is set for EKS mode.
-func reconcileEks(obj *irsav1alpha1.IRSASetup) error {
-	if obj.Spec.IamOIDCProvider == "" {
-		return fmt.Errorf("IamOIDCProvider parameter must be set when Mode is 'eks'")
+// reconcileEks iterates tasks for EKS mode.
+func reconcileEks(ctx context.Context, obj *irsav1alpha1.IRSASetup) error {
+	log := ctrllog.FromContext(ctx)
+	var reason irsav1alpha1.EksConditionReason
+
+	// e is set only when an error occurs in an external dependency process and is reflected in the CRs status
+	var e error
+	defer func() {
+		if e != nil {
+			*obj = irsav1alpha1.StatusNotReady(*obj, string(reason), e.Error())
+		}
+	}()
+	err := eks.Validate(obj)
+	if err != nil {
+		e = err
+		reason = irsav1alpha1.EksNotReady
+		return err
 	}
+	*obj = irsav1alpha1.SetupStatusReady(*obj, string(irsav1alpha1.EksReasonReady), "successfully setup for eks")
+	log.Info("The OIDC for EKS has been successfully set up")
 	return nil
 }
 

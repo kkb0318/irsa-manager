@@ -43,11 +43,12 @@ type IRSASetupSpec struct {
 	// Discovery configures the IdP Discovery process, essential for setting up IRSA by locating
 	// the OIDC provider information.
 	// Only applicable when Mode is "selfhosted".
-	Discovery Discovery `json:"discovery"`
+	// +optional
+	Discovery Discovery `json:"discovery,omitempty"`
 
 	// IamOIDCProvider configures IAM OIDC IamOIDCProvider Name
 	// Only applicable when Mode is "eks".
-	IamOIDCProvider string `json:"provider,omitempty"`
+	IamOIDCProvider string `json:"iamOIDCProvider,omitempty"`
 }
 
 // +kubebuilder:default=selfhosted
@@ -78,39 +79,39 @@ type S3Discovery struct {
 
 // IRSASetupStatus defines the observed state of IRSASetup
 type IRSASetupStatus struct {
-	SelfHostedSetup []metav1.Condition `json:"selfHostedSetup,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
-// GetSelfhostedStatusConditions returns a pointer to the Status.Conditions slice
-func (in *IRSASetup) GetSelfhostedStatusConditions() *[]metav1.Condition {
-	return &in.Status.SelfHostedSetup
+// GetStatusConditions returns a pointer to the Status.Conditions slice
+func (in *IRSASetup) GetStatusConditions() *[]metav1.Condition {
+	return &in.Status.Conditions
 }
 
-func SetupSelfHostedStatusReady(irsa IRSASetup, reason, message string) IRSASetup {
+func SetupStatusReady(irsa IRSASetup, reason, message string) IRSASetup {
 	newCondition := metav1.Condition{
 		Type:    ReadyCondition,
 		Status:  metav1.ConditionTrue,
 		Reason:  reason,
 		Message: message,
 	}
-	apimeta.SetStatusCondition(irsa.GetSelfhostedStatusConditions(), newCondition)
+	apimeta.SetStatusCondition(irsa.GetStatusConditions(), newCondition)
 	return irsa
 }
 
-func SelfHostedStatusNotReady(irsa IRSASetup, reason, message string) IRSASetup {
+func StatusNotReady(irsa IRSASetup, reason, message string) IRSASetup {
 	newCondition := metav1.Condition{
 		Type:    ReadyCondition,
 		Status:  metav1.ConditionFalse,
 		Reason:  reason,
 		Message: message,
 	}
-	apimeta.SetStatusCondition(irsa.GetSelfhostedStatusConditions(), newCondition)
+	apimeta.SetStatusCondition(irsa.GetStatusConditions(), newCondition)
 	return irsa
 }
 
-// SelfHostedReadyStatus
-func SelfHostedReadyStatus(irsa IRSASetup) *metav1.Condition {
-	if c := apimeta.FindStatusCondition(irsa.Status.SelfHostedSetup, ReadyCondition); c != nil {
+// ReadyStatus
+func ReadyStatus(irsa IRSASetup) *metav1.Condition {
+	if c := apimeta.FindStatusCondition(irsa.Status.Conditions, ReadyCondition); c != nil {
 		return c
 	}
 	return nil
@@ -129,22 +130,30 @@ func HasConditionReason(cond *metav1.Condition, reasons ...string) bool {
 	return false
 }
 
-func IsSelfHostedReadyConditionTrue(irsa IRSASetup) bool {
-	return apimeta.IsStatusConditionTrue(irsa.Status.SelfHostedSetup, ReadyCondition)
+func IsReadyConditionTrue(irsa IRSASetup) bool {
+	return apimeta.IsStatusConditionTrue(irsa.Status.Conditions, ReadyCondition)
 }
 
-type SelfHostedReason string
+type SelfhostedConditionReason string
 
 const (
-	SelfHostedReasonFailedWebhook SelfHostedReason = "SelfHostedSetupFailedWebhookCreation"
-	SelfHostedReasonFailedOidc    SelfHostedReason = "SelfHostedSetupFailedOidcCreation"
-	SelfHostedReasonFailedKeys    SelfHostedReason = "SelfHostedSetupFailedKeysCreation"
-	SelfHostedReasonReady         SelfHostedReason = "SelfHostedSetupReady"
+	SelfHostedReasonFailedWebhook SelfhostedConditionReason = "SelfHostedSetupFailedWebhookCreation"
+	SelfHostedReasonFailedOidc    SelfhostedConditionReason = "SelfHostedSetupFailedOidcCreation"
+	SelfHostedReasonFailedIssuer  SelfhostedConditionReason = "SelfHostedSetupFailedIssuer"
+	SelfHostedReasonFailedKeys    SelfhostedConditionReason = "SelfHostedSetupFailedKeysCreation"
+	SelfHostedReasonReady         SelfhostedConditionReason = "SelfHostedSetupReady"
+)
+
+type EksConditionReason string
+
+const (
+	EksNotReady    EksConditionReason = "EksOIDCNotReady"
+	EksReasonReady EksConditionReason = "EksOIDCSetupReady"
 )
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="SelfHostedReady",type="string",JSONPath=".status.selfHostedSetup[?(@.type==\"Ready\")].status",description=""
+//+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].status",description=""
 
 // IRSASetup represents a configuration for setting up IAM Roles for Service Accounts (IRSA) in a Kubernetes cluster.
 type IRSASetup struct {

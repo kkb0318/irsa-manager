@@ -15,8 +15,8 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.selfHostedSetup[?(@.type=="Ready")].status
-      name: SelfHostedReady
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
       type: string
     name: v1alpha1
     schema:
@@ -72,6 +72,11 @@ spec:
                     - region
                     type: object
                 type: object
+              iamOIDCProvider:
+                description: |-
+                  IamOIDCProvider configures IAM OIDC IamOIDCProvider Name
+                  Only applicable when Mode is "eks".
+                type: string
               mode:
                 description: |-
                   Mode specifies the operation mode of the controller.
@@ -86,19 +91,13 @@ spec:
                 x-kubernetes-validations:
                 - message: Value is immutable
                   rule: self == oldSelf
-              provider:
-                description: |-
-                  IamOIDCProvider configures IAM OIDC IamOIDCProvider Name
-                  Only applicable when Mode is "eks".
-                type: string
             required:
             - cleanup
-            - discovery
             type: object
           status:
             description: IRSASetupStatus defines the observed state of IRSASetup
             properties:
-              selfHostedSetup:
+              conditions:
                 items:
                   description: "Condition contains details for one aspect of the current
                     state of this API Resource.\n---\nThis struct is intended for
