@@ -43,7 +43,6 @@ type IRSASetupSpec struct {
 	// Discovery configures the IdP Discovery process, essential for setting up IRSA by locating
 	// the OIDC provider information.
 	// Only applicable when Mode is "selfhosted".
-	// +optional
 	Discovery Discovery `json:"discovery,omitempty"`
 
 	// IamOIDCProvider configures IAM OIDC IamOIDCProvider Name
