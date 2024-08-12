@@ -22,7 +22,11 @@ Before you begin, ensure you have the following:
 - A running Kubernetes cluster.
 - Helm installed on your local machine.
 - AWS user credentials with appropriate permissions.
-  - The permissions should allow irsa-manager to call the necessary AWS APIs. You can find all the APIs that irsa-manager calls in the internal/aws/aws.go interfaces.
+
+  - The permissions should allow irsa-manager to call the necessary AWS APIs. The following outlines the required permissions for self-hosted Kubernetes and EKS environments.
+
+<details>
+<summary>for self-hosted</summary>
 
 ```json
 {
@@ -47,6 +51,34 @@ Before you begin, ensure you have the following:
   ]
 }
 ```
+
+</details>
+
+<details>
+<summary>for EKS</summary>
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:UpdateAssumeRolePolicy",
+        "iam:AttachRolePolicy",
+        "iam:DeleteRole",
+        "iam:DetachRolePolicy",
+        "iam:ListAttachedRolePolicies",
+        "sts:GetCallerIdentity"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+</details>
 
 ## Setup
 
