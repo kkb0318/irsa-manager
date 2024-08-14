@@ -1,6 +1,6 @@
 ## Setup for Self-Hosted
 
-![](docs/IRSASetup-cr.png)
+![](./IRSASetup-cr.png)
 
 ### Define and apply an IRSASetup custom resource according to your needs.
 
