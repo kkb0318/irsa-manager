@@ -37,6 +37,11 @@ spec:
             secretKeyRef:
               key: aws-secret-access-key
               name: aws-secret
+        - name: AWS_SESSION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: aws-session-token
+              name: aws-secret
         - name: AWS_REGION
           valueFrom:
             secretKeyRef:
