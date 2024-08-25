@@ -122,12 +122,20 @@ func (a *AwsS3Client) PutObjectPublic(ctx context.Context, input ObjectInput) er
 func (a *AwsS3Client) CreateBucketPublic(ctx context.Context) error {
 	log.Printf("creating S3 bucket... Name: %s, Region: %s \n", a.bucketName, a.Region())
 	bucket := aws.String(a.bucketName)
-	_, err := a.Client.CreateBucket(ctx, &s3.CreateBucketInput{
-		Bucket: bucket,
-		CreateBucketConfiguration: &s3types.CreateBucketConfiguration{
-			LocationConstraint: s3types.BucketLocationConstraint(a.Region()),
-		},
-	})
+	var input *s3.CreateBucketInput
+	if a.Region() == "us-east-1" {
+		input = &s3.CreateBucketInput{
+			Bucket: bucket,
+		}
+	} else {
+		input = &s3.CreateBucketInput{
+			Bucket: bucket,
+			CreateBucketConfiguration: &s3types.CreateBucketConfiguration{
+				LocationConstraint: s3types.BucketLocationConstraint(a.Region()),
+			},
+		}
+	}
+	_, err := a.Client.CreateBucket(ctx, input)
 	if err != nil {
 		var bucketAlreadyOwnedByYou *s3types.BucketAlreadyOwnedByYou
 		if errors.As(err, &bucketAlreadyOwnedByYou) {
