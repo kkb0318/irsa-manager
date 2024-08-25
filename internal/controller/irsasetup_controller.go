@@ -88,11 +88,11 @@ func (r *IRSASetupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	defer func() {
-		if err := r.Get(ctx, req.NamespacedName, &irsav1alpha1.IRSASetup{}); err != nil {
+		if e := r.Get(ctx, req.NamespacedName, &irsav1alpha1.IRSASetup{}); e != nil {
 			return
 		}
 		statusHandler := handler.NewStatusHandler(kubeClient)
-		if err := statusHandler.Patch(ctx, obj); err != nil {
+		if e := statusHandler.Patch(ctx, obj); e != nil {
 			return
 		}
 	}()
