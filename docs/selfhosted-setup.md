@@ -12,6 +12,7 @@ metadata:
   namespace: irsa-manager-system
 spec:
   cleanup: false
+  mode: selfhosted
   discovery:
     s3:
       region: <region>
@@ -42,7 +43,7 @@ Then, modify the kube-apiserver settings to include the following parameters:
 - API Audiences
 
 ```
---api-audiences=sts.amazonaws.com
+--api-audiences=sts.amazonaws.com,https://kubernetes.default.svc.cluster.local
 ```
 
 - Service Account Issuer
@@ -79,3 +80,18 @@ The private key (oidc-issuer.key) generated previously can be read by the API se
 > If you do not mount /path/to directory, you need to add the volumes field to this path.
 
 For more details, refer to the [Kubernetes documentation](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#serviceaccount-token-volume-projection).
+
+Example configuration:
+```
+...
+    - --service-account-issuer=https://s3-<region>.amazonaws.com/<bucket>
+    - --service-account-issuer=https://kubernetes.default.svc.cluster.local
+    - --service-account-key-file=/etc/kubernetes/pki/irsa-manager.pub
+    - --service-account-key-file=/etc/kubernetes/pki/sa.pub
+    - --service-account-signing-key-file=/etc/kubernetes/pki/irsa-manager.key
+    - --service-cluster-ip-range=10.96.0.0/16
+    - --tls-cert-file=/etc/kubernetes/pki/apiserver.crt
+    - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
+    - --api-audiences=sts.amazonaws.com,https://kubernetes.default.svc.cluster.local
+...
+```
