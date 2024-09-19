@@ -28,3 +28,9 @@ metricsService:
     protocol: TCP
     targetPort: https
   type: ClusterIP
+proxy:
+  enabled: false
+  httpProxy: "<your_proxy>"
+  httpsProxy: "<your_proxy>"
+  noProxy: "localhost,127.0.0.1,<other_ip>"
+
