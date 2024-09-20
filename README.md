@@ -92,6 +92,7 @@ Create a secret for irsa-manager to access AWS:
 kubectl create secret generic aws-secret -n irsa-manager-system \
   --from-literal=aws-access-key-id=<your-access-key-id> \
   --from-literal=aws-secret-access-key=<your-secret-access-key> \
+  --from-literal=aws-session-token=<your-aws-session-token> # Optional \
   --from-literal=aws-region=<your-region> \
   --from-literal=aws-role-arn=<your-role-arn>  # Optional: Set this if you want to switch roles
 

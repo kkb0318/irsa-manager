@@ -52,19 +52,25 @@ spec:
                 secretKeyRef:
                   name: aws-secret
                   key: aws-access-key-id
-                  # optional: true
+                  optional: true
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: aws-secret
                   key: aws-secret-access-key
-                  # optional: true
+                  optional: true
+            - name: AWS_SESSION_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: aws-secret
+                    key: aws-session-token
+                    optional: true
             - name: AWS_REGION
               valueFrom:
                 secretKeyRef:
                   name: aws-secret
                   key: aws-region
-                  # optional: true
+                  optional: true
             - name: AWS_ROLE_ARN
               valueFrom:
                 secretKeyRef:
