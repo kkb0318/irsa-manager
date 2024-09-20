@@ -4,6 +4,30 @@ entries:
   - annotations:
       artifacthub.io/prerelease: "false"
     apiVersion: v2
+    appVersion: 0.3.2
+    created: "2024-09-20T11:18:49.478332209Z"
+    description: IRSA for non-EKS cluster
+    digest: c81992f30b016d62f29841d87f61fc229fbb9213093794710d407e44f7c0355f
+    home: https://github.com/kkb0318/irsa-manager
+    keywords:
+    - kubernetes
+    - irsa
+    - operator-manager
+    - operator
+    - controller
+    maintainers:
+    - email: nkkb0318@gmail.com
+      name: kkb
+    name: irsa-manager
+    sources:
+    - https://github.com/kkb0318/irsa-manager
+    type: application
+    urls:
+    - https://github.com/kkb0318/irsa-manager/releases/download/helm-irsa-manager-0.3.2/irsa-manager-0.3.2.tgz
+    version: 0.3.2
+  - annotations:
+      artifacthub.io/prerelease: "false"
+    apiVersion: v2
     appVersion: 0.3.1
     created: "2024-08-25T04:44:43.475641241Z"
     description: IRSA for non-EKS cluster
@@ -217,4 +241,4 @@ entries:
     urls:
     - https://github.com/kkb0318/irsa-manager/releases/download/helm-irsa-manager-0.1.0/irsa-manager-0.1.0.tgz
     version: 0.1.0
-generated: "2024-08-25T04:44:43.475682459Z"
+generated: "2024-09-20T11:18:49.478354961Z"
